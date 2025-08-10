@@ -1,0 +1,137 @@
+[
+    {
+        "name": "Aaj Tak",
+        "url": "https://www.aajtak.in",
+        "article_link_selector": ".top-newslist a, .story-list a, .news-list a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".story__content p:not([class*='ad'], [class*='advertisement'])",
+        "date_selector": "time, .date, .publish-date",
+        "image_selector": ".story__media img:not([class*='ad'])"
+    },
+    {
+        "name": "ABP News",
+        "url": "https://www.abplive.com",
+        "article_link_selector": ".top-news a, .article-list a, .news-card a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-body p:not([class*='ad'], [class*='sponsored'])",
+        "date_selector": "time, .date, .timestamp",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    },
+    {
+        "name": "Zee News",
+        "url": "https://zeenews.india.com",
+        "article_link_selector": ".lead-story a, .news-list a, .top-stories a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-content p:not([class*='ad'], [id*='gpt-ad'])",
+        "date_selector": ".date-time, time, .publish-date",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    },
+    {
+        "name": "Times of India",
+        "url": "https://timesofindia.indiatimes.com",
+        "article_link_selector": ".top-newslist a, .news-list a, .listing a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-body p:not([class*='ad'], [class*='advertisement'])",
+        "date_selector": "time, .date, .byline",
+        "image_selector": ".media img:not([class*='ad'])"
+    },
+    {
+        "name": "Dainik Jagran",
+        "url": "https://www.jagran.com",
+        "article_link_selector": ".news-list a, .top-story a, .article a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".articleBody p:not([class*='ad'])",
+        "date_selector": "time, .date, .publish-time",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    },
+    {
+        "name": "Hindustan",
+        "url": "https://www.livehindustan.com",
+        "article_link_selector": ".news-listing a, .top-news a, .story-card a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-content p:not([class*='ad'])",
+        "date_selector": "time, .date, .timestamp",
+        "image_selector": ".story-img img:not([class*='ad'])"
+    },
+    {
+        "name": "First Bihar",
+        "url": "https://www.firstbihar.com",
+        "article_link_selector": ".news-list a, .top-stories a, .article-link a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".post-content p:not([class*='ad'])",
+        "date_selector": "time, .date, .publish-date",
+        "image_selector": ".post-img img:not([class*='ad'])"
+    },
+    {
+        "name": "News18 Bihar-Jharkhand",
+        "url": "https://hindi.news18.com",
+        "article_link_selector": ".news-list a, .top-news a, .story-list a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-body p:not([class*='ad'])",
+        "date_selector": "time, .date, .publish-date",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    },
+    {
+        "name": "Zee Bihar-Jharkhand",
+        "url": "https://zeenews.india.com/hindi/india/bihar-jharkhand",
+        "article_link_selector": ".news-list a, .top-stories a, .article a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-content p:not([class*='ad'])",
+        "date_selector": "time, .date-time, .publish-date",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    },
+    {
+        "name": "Amar Ujala",
+        "url": "https://www.amarujala.com/",
+        "article_link_selector": ".news-list a, .top-stories a, .article a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-content p:not([class*='ad'])",
+        "date_selector": "time, .date-time, .publish-date",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    },
+    {
+        "name": "IndiaTv News",
+        "url": "https://www.indiatvnews.com/",
+        "article_link_selector": ".news-list a, .top-stories a, .article a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-content p:not([class*='ad'])",
+        "date_selector": "time, .date-time, .publish-date",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    },
+    {
+        "name": "The Hindu",
+        "url": "https://www.thehindu.com/news",
+        "article_link_selector": ".news-list a, .top-stories a, .article a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-content p:not([class*='ad'])",
+        "date_selector": "time, .date-time, .publish-date",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    },
+    {
+        "name": "Mahrathi Abplive",
+        "url": "https://marathi.abplive.com/news/maharashtra",
+        "article_link_selector": ".news-list a, .top-stories a, .article a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-content p:not([class*='ad'])",
+        "date_selector": "time, .date-time, .publish-date",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    },
+    {
+        "name": "loksatta",
+        "url": "https://www.loksatta.com/",
+        "article_link_selector": ".news-list a, .top-stories a, .article a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-content p:not([class*='ad'])",
+        "date_selector": "time, .date-time, .publish-date",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    },
+    {
+        "name": "BBC",
+        "url": "https://www.bbc.com/",
+        "article_link_selector": ".news-list a, .top-stories a, .article a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".article-content p:not([class*='ad'])",
+        "date_selector": "time, .date-time, .publish-date",
+        "image_selector": ".article-img img:not([class*='ad'])"
+    }
+]
