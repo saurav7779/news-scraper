@@ -2,7 +2,7 @@
     {
         "name": "Aaj Tak",
         "url": "https://www.aajtak.in",
-        "article_link_selector": ".top-newslist a, .story-list a, .news-list a",
+        "article_link_selector": ".story-listing a, .top-news a, .news-card a",
         "title_selector": "h1:not([class*='ad'])",
         "content_selector": ".story__content p:not([class*='ad'], [class*='advertisement'])",
         "date_selector": "time, .date, .publish-date",
@@ -108,7 +108,7 @@
         "image_selector": ".article-img img:not([class*='ad'])"
     },
     {
-        "name": "Mahrathi Abplive",
+        "name": "Marathi Abplive",
         "url": "https://marathi.abplive.com/news/maharashtra",
         "article_link_selector": ".news-list a, .top-stories a, .article a",
         "title_selector": "h1:not([class*='ad'])",
@@ -117,7 +117,7 @@
         "image_selector": ".article-img img:not([class*='ad'])"
     },
     {
-        "name": "loksatta",
+        "name": "Loksatta",
         "url": "https://www.loksatta.com/",
         "article_link_selector": ".news-list a, .top-stories a, .article a",
         "title_selector": "h1:not([class*='ad'])",
@@ -126,12 +126,30 @@
         "image_selector": ".article-img img:not([class*='ad'])"
     },
     {
-        "name": "BBC",
-        "url": "https://www.bbc.com/",
-        "article_link_selector": ".news-list a, .top-stories a, .article a",
+        "name": "CNN",
+        "url": "https://www.cnn.com",
+        "article_link_selector": ".container__headline a, .card a, .latest-news a",
         "title_selector": "h1:not([class*='ad'])",
-        "content_selector": ".article-content p:not([class*='ad'])",
+        "content_selector": ".article__content p:not([class*='ad'], [class*='sponsored'])",
+        "date_selector": "time, .timestamp, .publish-date",
+        "image_selector": ".media__image img:not([class*='ad'])"
+    },
+    {
+        "name": "The Guardian",
+        "url": "https://www.theguardian.com",
+        "article_link_selector": ".fc-item__link, .most-viewed a, .news a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".content__article-body p:not([class*='ad'])",
+        "date_selector": "time, .content__dateline, .publish-date",
+        "image_selector": ".content__main img:not([class*='ad'])"
+    },
+    {
+        "name": "BBC",
+        "url": "https://www.bbc.com/news",
+        "article_link_selector": ".gs-c-promo-heading, .top-stories a, .news-list a",
+        "title_selector": "h1:not([class*='ad'])",
+        "content_selector": ".story-body__inner p:not([class*='ad'])",
         "date_selector": "time, .date-time, .publish-date",
-        "image_selector": ".article-img img:not([class*='ad'])"
+        "image_selector": ".image-and-copyright-container img:not([class*='ad'])"
     }
 ]
