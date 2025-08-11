@@ -27,8 +27,8 @@ db = firestore.client()
 # Load Configs
 with open('news_sites.json') as f:
     news_sites = json.load(f)
-with open('proxy_list.txt') as f:
-    proxies = [line.strip() for line in f if line.strip()]
+# with open('proxy_list.txt') as f:
+#     proxies = [line.strip() for line in f if line.strip()]
 
 # Initialize Models
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
@@ -41,8 +41,8 @@ def get_random_headers():
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)'
     ])}
 
-def get_proxy():
-    return {'http': f'http://{random.choice(proxies)}'} if proxies else None
+# def get_proxy():
+#     return {'http': f'http://{random.choice(proxies)}'} if proxies else None
 
 def clean_text(text):
     return re.sub(r'\s+', ' ', text).strip()
@@ -84,7 +84,7 @@ def scrape_and_save():
             response = requests.get(
                 site['url'],
                 headers=get_random_headers(),
-                proxies=get_proxy(),
+                # proxies=get_proxy(),
                 timeout=10
             )
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -135,4 +135,5 @@ def scrape_and_save():
 
 # Run once (Actions will schedule)
 if __name__ == "__main__":
+
     scrape_and_save()
