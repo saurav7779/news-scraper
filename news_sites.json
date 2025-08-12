@@ -2,16 +2,16 @@
     {
         "name": "Aaj Tak",
         "url": "https://www.aajtak.in",
-        "article_link_selector": ".story__card a, .widget-listing a, .news-card a",
-        "title_selector": "h1.secStoryTitle, h1.story-title, h1.detail-title",
-        "content_selector": ".storyBody p, .detail-desc p, .story__content p",
+        "article_link_selector": ".story-box a, .widget-story a, .latest-news a, .news-card a, .story__card a",
+        "title_selector": "h1.secStoryTitle, h1.story__title, h1.detail-title, h1.title",
+        "content_selector": ".storyBody p, .story-detail p, .description p, .story-content p",
         "date_selector": "time, .story-date, .publish-date",
         "image_selector": ".story-img img, .img-holder img, .image-container img"
     },
     {
         "name": "ABP News",
         "url": "https://www.abplive.com",
-        "article_link_selector": ".news-card a, .story-card a, .top-news-item a",
+        "article_link_selector": ".news-card a, .story-item a, .top-news-item a, .latest-news a, .story-card a",
         "title_selector": "h1.story-heading, h1.title, h1.article-title",
         "content_selector": ".story-content p, .article-text p, .detail-content p",
         "date_selector": "time, .date, .timestamp",
@@ -20,7 +20,7 @@
     {
         "name": "Zee News",
         "url": "https://zeenews.india.com",
-        "article_link_selector": ".story-box a, .news-item a, .lead-headline a",
+        "article_link_selector": ".story-box a, .news-item a, .lead-headline a, .section-news a, .news-card a",
         "title_selector": "h1.content-heading, h1.news-title, h1.headline",
         "content_selector": ".story-body p, .article-text p, .content-text p",
         "date_selector": ".date-time, time, .publish-date",
@@ -29,7 +29,7 @@
     {
         "name": "Times of India",
         "url": "https://timesofindia.indiatimes.com",
-        "article_link_selector": ".story-list a, .top-newslist a, .news-card a",
+        "article_link_selector": ".top-newslist a, .story-list a, .news-card a, .listArticle a, .article-list a",
         "title_selector": "h1._1Y-96, h1.title, h1.article-title",
         "content_selector": ".content p, .article-body p, .story-content p",
         "date_selector": "time, .date, .byline",
@@ -38,7 +38,7 @@
     {
         "name": "Dainik Jagran",
         "url": "https://www.jagran.com",
-        "article_link_selector": ".news-feed a, .story-item a, .top-story a",
+        "article_link_selector": ".news-feed a, .story-item a, .top-story a, .article-link a, .news-card a",
         "title_selector": "h1.artTitle, h1.title, h1.headline",
         "content_selector": ".articleBody p, .story-text p, .content-body p",
         "date_selector": "time, .date, .publish-time",
@@ -47,7 +47,7 @@
     {
         "name": "Hindustan",
         "url": "https://www.livehindustan.com",
-        "article_link_selector": ".news-card a, .story-list a, .top-news-item a",
+        "article_link_selector": ".news-card a, .story-list a, .top-news-item a, .latest-news a, .story-card a",
         "title_selector": "h1.story-heading, h1.title, h1.article-title",
         "content_selector": ".story-detail p, .article-content p, .detail-content p",
         "date_selector": "time, .date, .timestamp",
@@ -56,7 +56,7 @@
     {
         "name": "First Bihar",
         "url": "https://www.firstbihar.com",
-        "article_link_selector": ".post-item a, .news-list a, .top-stories a",
+        "article_link_selector": ".post-item a, .news-list a, .top-stories a, .article-link a, .news-card a",
         "title_selector": "h1.post-title, h1.title, h1.headline",
         "content_selector": ".post-content p, .article-body p, .story-content p",
         "date_selector": "time, .date, .publish-date",
@@ -65,7 +65,7 @@
     {
         "name": "News18 Bihar-Jharkhand",
         "url": "https://hindi.news18.com",
-        "article_link_selector": ".jsx-4282245699 a, .news-item a, .story-card a",
+        "article_link_selector": ".news-item a, .story-card a, .jsx-4282245699 a, .latest-news a, .news-card a",
         "title_selector": "h1.article-heading, h1.title, h1.headline",
         "content_selector": ".article-content p, .story-text p, .detail-content p",
         "date_selector": "time, .date, .publish-date",
@@ -74,7 +74,7 @@
     {
         "name": "Zee Bihar-Jharkhand",
         "url": "https://zeenews.india.com/hindi/india/bihar-jharkhand",
-        "article_link_selector": ".news-item a, .story-box a, .top-stories a",
+        "article_link_selector": ".news-item a, .story-box a, .top-stories a, .section-news a, .news-card a",
         "title_selector": "h1.content-heading, h1.title, h1.headline",
         "content_selector": ".article-body p, .story-content p, .content-text p",
         "date_selector": "time, .date-time, .publish-date",
@@ -83,7 +83,7 @@
     {
         "name": "Amar Ujala",
         "url": "https://www.amarujala.com/",
-        "article_link_selector": ".story-card a, .news-item a, .top-news a",
+        "article_link_selector": ".story-card a, .news-item a, .top-news a, .latest-news a, .news-card a",
         "title_selector": "h1.story-title, h1.title, h1.headline",
         "content_selector": ".story-content p, .article-body p, .detail-content p",
         "date_selector": "time, .date-time, .publish-date",
@@ -92,7 +92,7 @@
     {
         "name": "The Hindu",
         "url": "https://www.thehindu.com/news",
-        "article_link_selector": ".story-card-news a, .news-item a, .top-stories a",
+        "article_link_selector": ".story-card-news a, .news-item a, .top-stories a, .story-card a, .news-card a",
         "title_selector": "h1.title, h1.headline, h1.story-title",
         "content_selector": ".article-body p, .content-body p, .story-text p",
         "date_selector": "time, .dateline, .publish-date",
@@ -101,7 +101,7 @@
     {
         "name": "Marathi Abplive",
         "url": "https://marathi.abplive.com/news/maharashtra",
-        "article_link_selector": ".news-item a, .story-card a, .top-news a",
+        "article_link_selector": ".news-item a, .story-card a, .top-news a, .latest-news a, .news-card a",
         "title_selector": "h1.story-heading, h1.title, h1.article-title",
         "content_selector": ".story-detail p, .article-content p, .detail-content p",
         "date_selector": "time, .date, .timestamp",
@@ -110,7 +110,7 @@
     {
         "name": "Loksatta",
         "url": "https://www.loksatta.com/",
-        "article_link_selector": ".story-card a, .news-item a, .top-stories a",
+        "article_link_selector": ".story-card a, .news-item a, .top-stories a, .latest-news a, .news-card a",
         "title_selector": "h1.entry-title, h1.title, h1.headline",
         "content_selector": ".entry-content p, .article-body p, .story-content p",
         "date_selector": "time, .date-time, .publish-date",
@@ -119,7 +119,7 @@
     {
         "name": "CNN",
         "url": "https://www.cnn.com",
-        "article_link_selector": ".container__link--type-article a, .card__link a, .latest__story a",
+        "article_link_selector": ".container__link--type-article a, .card__headline a, .latest__story a, .zone__content a, .news-card a",
         "title_selector": "h1.pg-headline, h1.headline, h1.article-title",
         "content_selector": ".article__content p, .zn-body__paragraph, .paragraph p",
         "date_selector": "time, .timestamp, .update-time",
@@ -128,7 +128,7 @@
     {
         "name": "The Guardian",
         "url": "https://www.theguardian.com",
-        "article_link_selector": ".fc-item__title a, .u-faux-block-link__overlay, .most-viewed-list a",
+        "article_link_selector": ".fc-item__title a, .u-faux-block-link__overlay, .most-viewed-list a, .dcr-10khgmf a, .news-card a",
         "title_selector": "h1.dcr-1fasdpd, h1.content__headline, h1.headline",
         "content_selector": ".article-body-commercial-selector p, .dcr-1rstgp2 p, .content__article-body p",
         "date_selector": "time, .content__dateline, .dcr-1axvov4",
@@ -137,7 +137,7 @@
     {
         "name": "BBC",
         "url": "https://www.bbc.com/news",
-        "article_link_selector": ".gs-c-promo-heading a, .ssrcss-1f6idsk-PromoLink a, .top-list-item a",
+        "article_link_selector": ".gs-c-promo-heading a, .ssrcss-1f6idsk-PromoLink a, .top-list-item a, .ssrcss-1q3ahmq-PromoLink a, .news-card a",
         "title_selector": "h1.ssrcss-15xko80-StyledHeading, h1.main-heading, h1.story-heading",
         "content_selector": ".ssrcss-1q0x1qg-Paragraph p, .story-body__inner p, .article-body p",
         "date_selector": "time, .ssrcss-1r412x1-MetadataText, .date-time",
