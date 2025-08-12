@@ -22,7 +22,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip chromium-browser chromium-chromedriver
-          pip install -r requirements.txt
+          pip install --no-cache-dir -r requirements.txt
+      - name: Verify selenium installation
+        run: |
+          python -c "import selenium; print(selenium.__version__)"
       - name: Run scraper
         env:
           FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
