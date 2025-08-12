@@ -9,6 +9,8 @@ from transformers import pipeline
 from googletrans import Translator
 import firebase_admin
 from firebase_admin import credentials, firestore
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
 # Debug: Print current directory and files
 print("Current directory:", os.getcwd())
@@ -112,39 +114,53 @@ def detect_category(title, content):
     for cat, keywords in categories.items():
         if any(kw in title or kw in content for kw in keywords):
             return cat
-    return 'all'  # Default to 'all' if no specific category matches
+    return 'all'
+
+def get_article_soup(url):
+    try:
+        options = Options()
+        options.headless = True
+        driver = webdriver.Chrome(options=options)
+        driver.get(url)
+        time.sleep(2)  # Wait for JavaScript to load
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        driver.quit()
+        return soup
+    except Exception as e:
+        print(f"Selenium error for {url}: {e}")
+        return BeautifulSoup(requests.get(url, headers=get_random_headers(), timeout=10).text, 'html.parser')
 
 # Main Scraping Function
 def scrape_and_save():
     for site in news_sites:
         print(f"Scraping site: {site['name']} ({site['url']})")
         try:
-            response = requests.get(
-                site['url'],
-                headers=get_random_headers(),
-                timeout=10
-            )
+            response = requests.get(site['url'], headers=get_random_headers(), timeout=10)
             print(f"Response status for {site['name']}: {response.status_code}")
             soup = BeautifulSoup(response.text, 'html.parser')
-            article_links = soup.select(site['article_link_selector'])[:5]
+            article_links = list(set(link['href'] for link in soup.select(site['article_link_selector']) if link.get('href')))[:5]
+            article_links = [link for link in article_links if link.startswith('http') and 'news' in link and 'play.google.com' not in link]
             print(f"Found {len(article_links)} article links for {site['name']}")
             
             for link in article_links:
                 try:
-                    article_url = link['href'] if link['href'].startswith('http') else site['url'].rstrip('/') + '/' + link['href'].lstrip('/')
+                    article_url = link if link.startswith('http') else site['url'].rstrip('/') + '/' + link.lstrip('/')
                     print(f"Fetching article: {article_url}")
-                    article_res = requests.get(article_url, headers=get_random_headers(), timeout=10)
-                    article_soup = BeautifulSoup(article_res.text, 'html.parser')
-                    
+                    article_soup = get_article_soup(article_url)
+                    print(f"Title selector: {site['title_selector']}")
                     title_elem = article_soup.select_one(site['title_selector'])
                     if not title_elem:
+                        title_elem = article_soup.find('title')
+                    title = clean_text(title_elem.text) if title_elem else None
+                    print(f"Found title: {title[:50] if title else 'None'}...")
+                    if not title:
                         print(f"No title found for {article_url}")
                         continue
-                    title = clean_text(title_elem.text)
-                    print(f"Title: {title[:50]}...")
                     
+                    print(f"Content selector: {site['content_selector']}")
                     content_paras = article_soup.select(site['content_selector'])[:3]
                     content = ' '.join([p.text for p in content_paras if p.text])
+                    print(f"Found content: {content[:100] if content else 'None'}...")
                     if not content:
                         print(f"No content found for {article_url}")
                         continue
@@ -154,23 +170,22 @@ def scrape_and_save():
                     
                     doc_ref = db.collection("news").document()
                     doc_ref.set({
-                        "title": title,
-                        "summary": summary,
-                        "hindi_translation": translate_text(summary, 'hi'),
-                        "tamil_translation": translate_text(summary, 'ta'),
-                        "image": extract_image(article_soup, site['image_selector']),
-                        "location": extract_location(content),
-                        "category": detect_category(title, content),
+                        "title": title or "No Title",
+                        "summary": summary or "No Summary",
+                        "hindi_translation": translate_text(summary, 'hi') if summary else "No Hindi Translation",
+                        "tamil_translation": translate_text(summary, 'ta') if summary else "No Tamil Translation",
+                        "image": extract_image(article_soup, site['image_selector']) or "No Image",
+                        "location": extract_location(content) if content else "Unknown",
+                        "category": detect_category(title, content) if title or content else "Unknown",
                         "source": site['name'],
-                        "timestamp": firestore.SERVER_TIMESTAMP
+                        "timestamp": firestore.SERVER_TIMESTAMP,
+                        "url": article_url
                     })
-                    print(f"✅ Saved: {title[:50]}... from {site['name']}")
-                    time.sleep(random.uniform(3, 7))  # Avoid blocking
-                    
+                    print(f"✅ Saved: {title[:50] if title else 'No Title'}... from {site['name']}")
+                    time.sleep(random.uniform(3, 7))
                 except Exception as e:
                     print(f"⚠️ Article Error in {site['name']}: {e}")
                     continue
-                    
         except Exception as e:
             print(f"🚨 Site Error ({site['name']}): {e}")
             continue
