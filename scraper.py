@@ -7,61 +7,52 @@ import os
 from bs4 import BeautifulSoup
 from transformers import pipeline
 from googletrans import Translator
+from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 
-# Debug: Print current directory and files
-print("Current directory:", os.getcwd())
-print("Files in directory:", os.listdir('.'))
-
-# Handle Firebase key from env
+# Handle Firebase key from env (for GitHub Actions)
 firebase_key_content = os.environ.get('FIREBASE_KEY')
 if firebase_key_content:
-    with open('firebase-key.json', 'w') as f:
+    with open('firebase_key.json', 'w') as f:
         f.write(firebase_key_content)
-    print("Firebase key written from env")
 else:
-    print("Warning: FIREBASE_KEY env not set")
+    print("Warning: FIREBASE_KEY env not set, using local file if exists.")
 
 # Initialize Firebase
 try:
-    cred = credentials.Certificate("firebase-key.json")
+    cred = credentials.Certificate("firebase_key.json")
     firebase_admin.initialize_app(cred)
     db = firestore.client()
-    print("Firebase initialized successfully")
 except Exception as e:
-    print(f"Firebase init error: {e}")
+    print(f"🚨 Firebase Initialization Error: {e}")
+    exit(1)
 
 # Load Configs
 try:
     with open('news_sites.json') as f:
         news_sites = json.load(f)
-    print("Loaded news_sites.json")
 except Exception as e:
-    print(f"Error loading news_sites.json: {e}")
+    print(f"🚨 Error loading news_sites.json: {e}")
+    exit(1)
 
 # Initialize Models
 try:
     summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-    print("Summarizer initialized")
+    translator = Translator()
 except Exception as e:
-    print(f"Summarizer init error: {e}")
-translator = Translator()
+    print(f"🚨 Model Initialization Error: {e}")
+    exit(1)
 
 # Helper Functions
 def get_random_headers():
     return {'User-Agent': random.choice([
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15'
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)'
     ])}
 
-def get_proxy():
-    return None  # Proxies disabled
-
 def clean_text(text):
-    return re.sub(r'\s+', ' ', text).strip() if text else ""
+    return re.sub(r'\s+', ' ', text).strip()
 
 def translate_text(text, lang='hi'):
     try:
@@ -83,112 +74,95 @@ def extract_location(content):
 
 def detect_category(title, content):
     categories = {
-        'politics': ['election', 'modi', 'bjp', 'congress', 'government', 'parliament', 'policy'],
-        'sports': ['cricket', 'football', 'ipl', 'olympics', 'tennis', 'hockey'],
-        'entertainment': ['bollywood', 'hollywood', 'movie', 'actor', 'actress', 'film'],
-        'technology': ['ai', 'smartphone', 'tech', 'gadget', 'software', 'internet'],
-        'business': ['market', 'stock', 'economy', 'trade', 'industry', 'company'],
-        'finance': ['bank', 'investment', 'finance', 'money', 'budget', 'loan'],
-        'health': ['health', 'covid', 'hospital', 'medicine', 'disease', 'vaccine'],
-        'education': ['school', 'college', 'university', 'exam', 'education', 'student'],
-        'lifestyle': ['lifestyle', 'fashion', 'beauty', 'wellness', 'home', 'living'],
-        'science': ['science', 'research', 'space', 'physics', 'biology', 'discovery'],
-        'world': ['international', 'global', 'world', 'foreign', 'diplomacy'],
-        'crime': ['crime', 'murder', 'theft', 'arrest', 'police', 'law'],
-        'environment': ['climate', 'environment', 'pollution', 'wildlife', 'forest'],
-        'travel': ['travel', 'tourism', 'destination', 'vacation', 'adventure'],
-        'fashion': ['fashion', 'clothing', 'designer', 'style', 'trend'],
-        'festival': ['festival', 'diwali', 'holi', 'christmas', 'eid', 'celebration'],
-        'job': ['job', 'employment', 'career', 'recruitment', 'hiring'],
-        'food': ['food', 'recipe', 'cuisine', 'cooking', 'restaurant'],
-        'culture': ['culture', 'tradition', 'heritage', 'art', 'history'],
-        'music': ['music', 'song', 'album', 'concert', 'singer'],
-        'religion': ['religion', 'temple', 'mosque', 'church', 'prayer'],
-        'agriculture': ['agriculture', 'farming', 'crop', 'harvest', 'farmer'],
-        'automobile': ['car', 'bike', 'vehicle', 'automobile', 'auto'],
-        'gaming': ['game', 'gaming', 'esports', 'console', 'video game'],
-        'trending': ['trending', 'viral', 'popular', 'social media', 'buzz']
+        'sports': ['cricket', 'football', 'ipl'],
+        'politics': ['modi', 'election', 'bjp'],
+        'technology': ['ai', 'smartphone', 'tech']
     }
-    title = title.lower() if title else ""
-    content = content.lower() if content else ""
     for cat, keywords in categories.items():
-        if any(kw in title or kw in content for kw in keywords):
+        if any(kw in title.lower() or kw in content.lower() for kw in keywords):
             return cat
-    return 'all'
-
-def get_article_soup(url):
-    try:
-        options = Options()
-        options.headless = True
-        driver = webdriver.Chrome(options=options)
-        driver.get(url)
-        time.sleep(2)  # Wait for JavaScript to load
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        driver.quit()
-        return soup
-    except Exception as e:
-        print(f"Selenium error for {url}: {e}")
-        return BeautifulSoup(requests.get(url, headers=get_random_headers(), timeout=10).text, 'html.parser')
+    return 'general'
 
 # Main Scraping Function
 def scrape_and_save():
     for site in news_sites:
-        print(f"Scraping site: {site['name']} ({site['url']})")
         try:
-            response = requests.get(site['url'], headers=get_random_headers(), timeout=10)
-            print(f"Response status for {site['name']}: {response.status_code}")
+            # Fetch without Proxy
+            response = requests.get(
+                site['url'],
+                headers=get_random_headers(),
+                timeout=10
+            )
+            print(f"Response Status for {site['name']}: {response.status_code}")
             soup = BeautifulSoup(response.text, 'html.parser')
-            article_links = list(set(link['href'] for link in soup.select(site['article_link_selector']) if link.get('href')))[:5]
-            article_links = [link for link in article_links if link.startswith('http') and 'news' in link and 'play.google.com' not in link]
-            print(f"Found {len(article_links)} article links for {site['name']}")
             
-            for link in article_links:
+            # Process Articles (top 5, remove duplicates)
+            article_links = list(set([link['href'] for link in soup.select(site['article_link_selector'])]))[:5]
+            print(f"Found {len(article_links)} unique articles for {site['name']}")
+            for article_url in article_links:
                 try:
-                    article_url = link if link.startswith('http') else site['url'].rstrip('/') + '/' + link.lstrip('/')
-                    print(f"Fetching article: {article_url}")
-                    article_soup = get_article_soup(article_url)
-                    print(f"Title selector: {site['title_selector']}")
+                    # Ensure full URL
+                    article_url = article_url if article_url.startswith('http') else site['url'].rstrip('/') + '/' + article_url.lstrip('/')
+                    print(f"Scraping Article: {article_url}")
+                    article_res = requests.get(article_url, headers=get_random_headers(), timeout=10)
+                    article_soup = BeautifulSoup(article_res.text, 'html.parser')
+                    
+                    # Extract Data
                     title_elem = article_soup.select_one(site['title_selector'])
                     if not title_elem:
-                        title_elem = article_soup.find('title')
-                    title = clean_text(title_elem.text) if title_elem else None
-                    print(f"Found title: {title[:50] if title else 'None'}...")
-                    if not title:
-                        print(f"No title found for {article_url}")
+                        print(f"No Title Found for {article_url}")
                         continue
+                    title = clean_text(title_elem.text)
+                    print(f"Title: {title[:50]}...")
                     
-                    print(f"Content selector: {site['content_selector']}")
                     content_paras = article_soup.select(site['content_selector'])[:3]
-                    content = ' '.join([p.text for p in content_paras if p.text])
-                    print(f"Found content: {content[:100] if content else 'None'}...")
+                    content = ' '.join([clean_text(p.text) for p in content_paras])
                     if not content:
-                        print(f"No content found for {article_url}")
+                        print(f"No Content Found for {article_url}")
+                        continue
+                    print(f"Content: {content[:100]}...")
+                    
+                    # Summarize
+                    try:
+                        summary = summarizer(content, max_length=100, min_length=60, do_sample=False)[0]['summary_text']
+                        print(f"Summary: {summary[:100]}...")
+                    except Exception as e:
+                        print(f"⚠️ Summarization Error for {article_url}: {e}")
                         continue
                     
-                    summary = summarizer(content, max_length=100, min_length=60, do_sample=False)[0]['summary_text']
-                    print(f"Summary generated for {title[:50]}...")
+                    # Translate
+                    hindi_translation = translate_text(summary, 'hi')
+                    tamil_translation = translate_text(summary, 'ta')
+                    print(f"Hindi Translation: {hindi_translation[:100]}...")
+                    print(f"Tamil Translation: {tamil_translation[:100]}...")
                     
-                    doc_ref = db.collection("news").document()
-                    doc_ref.set({
-                        "title": title or "No Title",
-                        "summary": summary or "No Summary",
-                        "hindi_translation": translate_text(summary, 'hi') if summary else "No Hindi Translation",
-                        "tamil_translation": translate_text(summary, 'ta') if summary else "No Tamil Translation",
-                        "image": extract_image(article_soup, site['image_selector']) or "No Image",
-                        "location": extract_location(content) if content else "Unknown",
-                        "category": detect_category(title, content) if title or content else "Unknown",
-                        "source": site['name'],
-                        "timestamp": firestore.SERVER_TIMESTAMP,
-                        "url": article_url
-                    })
-                    print(f"✅ Saved: {title[:50] if title else 'No Title'}... from {site['name']}")
-                    time.sleep(random.uniform(3, 7))
+                    # Save to Firebase
+                    try:
+                        doc_ref = db.collection("news").document()
+                        doc_ref.set({
+                            "title": title,
+                            "summary": summary,
+                            "hindi_translation": hindi_translation,
+                            "tamil_translation": tamil_translation,
+                            "image": extract_image(article_soup, site['image_selector']),
+                            "location": extract_location(content),
+                            "category": detect_category(title, content),
+                            "source": site['name'],
+                            "timestamp": firestore.SERVER_TIMESTAMP
+                        })
+                        print(f"✅ Saved: {title[:50]}... from {site['name']}")
+                    except Exception as e:
+                        print(f"⚠️ Firebase Save Error for {article_url}: {e}")
+                        continue
+                    
+                    time.sleep(random.randint(3, 7))  # Avoid Blocking
+                
                 except Exception as e:
-                    print(f"⚠️ Article Error in {site['name']}: {e}")
+                    print(f"⚠️ Article Error in {site['name']} ({article_url}): {e}")
                     continue
+                    
         except Exception as e:
             print(f"🚨 Site Error ({site['name']}): {e}")
-            continue
 
 # Run once
 if __name__ == "__main__":
