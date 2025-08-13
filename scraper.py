@@ -10,7 +10,9 @@ from googletrans import Translator
 from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, firestore
-import langdetect
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from langdetect import detect
 from dateutil.parser import parse
 
 # Handle Firebase key from env (for GitHub Actions)
@@ -20,10 +22,15 @@ if firebase_key_content:
         f.write(firebase_key_content)
 else:
     print("Warning: FIREBASE_KEY env not set, using local file if exists.")
+    if os.path.exists('firebase_key.json'):
+        firebase_key_content = 'firebase_key.json'
+    else:
+        print("🚨 No Firebase key found!")
+        exit(1)
 
 # Initialize Firebase
 try:
-    cred = credentials.Certificate("D:\\Saurav\\NEW MKS\\news_scraper\\firebase_key.json")
+    cred = credentials.Certificate(firebase_key_content)
     firebase_admin.initialize_app(cred)
     db = firestore.client()
 except Exception as e:
@@ -41,7 +48,7 @@ except Exception as e:
 # Initialize Models
 summarizer = None
 try:
-    summarizer = pipeline("summarization", model="facebook/bart-large-cnn", local_files_only=True)
+    summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 except Exception as e:
     print(f"⚠️ Model Initialization Error: {e}. Proceeding without summarization.")
 translator = Translator()
@@ -49,16 +56,33 @@ translator = Translator()
 # Helper Functions
 def get_random_headers():
     return {'User-Agent': random.choice([
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15)'
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36'
     ])}
+
+def get_page_content(url):
+    try:
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        driver = webdriver.Chrome(options=options)
+        driver.get(url)
+        time.sleep(3)  # Wait for JS to load
+        html = driver.page_source
+        driver.quit()
+        return html
+    except Exception as e:
+        print(f"⚠️ Selenium Error for {url}: {e}")
+        return None
 
 def clean_text(text):
     return re.sub(r'\s+', ' ', text).strip() if text else ''
 
 def detect_language(text):
     try:
-        return langdetect.detect(text)
+        return detect(text)
     except:
         return 'en'
 
@@ -73,7 +97,6 @@ def extract_image(soup, selector):
     img = soup.select_one(selector)
     if img and 'src' in img.attrs:
         return img['src']
-    # Fallback: Try other common image tags
     for alt_selector in ['img.featured-image', 'img.main-img', 'img.article-image', 'img']:
         img = soup.select_one(alt_selector)
         if img and 'src' in img.attrs:
@@ -111,52 +134,47 @@ def detect_category(title, content):
 def scrape_and_save():
     for site in news_sites:
         try:
-            # Fetch main page
-            response = requests.get(site['url'], headers=get_random_headers(), timeout=10)
-            print(f"Response Status for {site['name']}: {response.status_code}")
-            soup = BeautifulSoup(response.text, 'html.parser')
+            # Fetch main page with Selenium
+            html = get_page_content(site['url'])
+            if not html:
+                print(f"🚨 Failed to fetch {site['name']}")
+                continue
+            soup = BeautifulSoup(html, 'html.parser')
             
             # Get article links (including pagination/archive)
             article_links = set()
-            main_links = [link['href'] for link in soup.select(site['article_link_selector']) if 'href' in link.attrs]
-            # Add pagination/archive links
-            pagination_links = soup.select('a[href*="/page/"], a[href*="/archive/"], a.next, a.pagination')
-            for page_link in pagination_links[:2]:  # Limit to 2 pages for historical news
-                if 'href' in page_link.attrs:
-                    page_url = page_link['href'] if page_link['href'].startswith('http') else site['url'].rstrip('/') + '/' + page_link['href'].lstrip('/')
-                    try:
-                        page_res = requests.get(page_url, headers=get_random_headers(), timeout=10)
-                        page_soup = BeautifulSoup(page_res.text, 'html.parser')
-                        page_links = [link['href'] for link in page_soup.select(site['article_link_selector']) if 'href' in link.attrs]
-                        main_links.extend(page_links)
-                    except Exception as e:
-                        print(f"⚠️ Pagination Error for {site['name']} ({page_url}): {e}")
-            article_links = list(set(main_links))[:10]  # Limit to 10 unique articles
+            main_links = [link['href'] for link in soup.select(site['article_link_selector'])]
+            article_links.update(main_links)
+            article_links = list(article_links)[:5]  # Limit to 5 articles
             print(f"Found {len(article_links)} unique articles for {site['name']}")
             
             for article_url in article_links:
                 try:
+                    # Ensure full URL
                     article_url = article_url if article_url.startswith('http') else site['url'].rstrip('/') + '/' + article_url.lstrip('/')
-                    if any(x in article_url for x in ['/video/', '/category/', '/live/', '/photos/', '/short-videos/']):
-                        print(f"Skipping non-article URL: {article_url}")
-                        continue
                     print(f"Scraping Article: {article_url}")
-                    article_res = requests.get(article_url, headers=get_random_headers(), timeout=10)
-                    article_soup = BeautifulSoup(article_res.text, 'html.parser')
+                    article_res = get_page_content(article_url)
+                    if not article_res:
+                        print(f"⚠️ Failed to fetch article {article_url}")
+                        continue
+                    article_soup = BeautifulSoup(article_res, 'html.parser')
                     
-                    # Extract Title
+                    # Extract Data
                     title_elem = article_soup.select_one(site['title_selector'])
                     if not title_elem:
-                        print(f"No Title Found for {article_url}")
+                        with open(f"failed_{site['name']}_{time.time()}.html", "w", encoding="utf-8") as f:
+                            f.write(article_res)
+                        print(f"No Title Found for {article_url}, saved HTML for debugging")
                         continue
                     title = clean_text(title_elem.text)
                     print(f"Title: {title[:50]}...")
                     
-                    # Extract Content
                     content_paras = article_soup.select(site['content_selector'])[:3]
                     content = ' '.join([clean_text(p.text) for p in content_paras])
                     if not content:
-                        print(f"No Content Found for {article_url}")
+                        with open(f"failed_{site['name']}_{time.time()}.html", "w", encoding="utf-8") as f:
+                            f.write(article_res)
+                        print(f"No Content Found for {article_url}, saved HTML for debugging")
                         continue
                     print(f"Content: {content[:100]}...")
                     
@@ -196,8 +214,8 @@ def scrape_and_save():
                             doc_ref = db.collection("news").document()
                             doc_ref.set({
                                 "title": title,
-                                "content": content,  # Save original content
-                                "language": lang,    # Save original language
+                                "content": content,
+                                "language": lang,
                                 "summary": summary,
                                 "translations": translations,
                                 "image": extract_image(article_soup, site['image_selector']),
@@ -215,6 +233,8 @@ def scrape_and_save():
                             if attempt < 2:
                                 time.sleep(5)
                             else:
+                                with open("failed_articles.json", "a") as f:
+                                    json.dump({"title": title, "url": article_url, "source": site['name']}, f)
                                 print(f"🚨 Failed to save {article_url} after 3 attempts")
                     
                     time.sleep(random.randint(3, 7))
@@ -225,6 +245,7 @@ def scrape_and_save():
                     
         except Exception as e:
             print(f"🚨 Site Error ({site['name']}): {e}")
+            continue
 
 if __name__ == "__main__":
     scrape_and_save()
