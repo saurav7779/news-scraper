@@ -2,117 +2,45 @@
     {
         "name": "Aaj Tak",
         "url": "https://www.aajtak.in",
-        "article_link_selector": "a[href*='/story/']:not([href*='/videos/'], [href*='/short-videos/'], [href*='/live/'], [href*='/category/'], [href*='/photos/'], [href*='/podcast/'])",
-        "title_selector": "h1.story__title, h1.secStoryTitle, h1.detail-title, h1.title",
-        "content_selector": "div.story__content p, div.storyBody p, div.story-detail p, div.description p, div.article-content p",
-        "image_selector": "meta[property='og:image'], .story-img img, .img-holder img, .image-container img, .sv_swiper img, img[data-src]",
+        "article_link_selector": "a[href*='/story/'], a[href*='/news/']:not([href*='/videos/'], [href*='/short-videos/'], [href*='/live/'], [href*='/category/'], [href*='/photos/'], [href*='/podcast/'])",
+        "title_selector": "h1.secStoryTitle, h1.title, h1.detail-title, h1",
+        "content_selector": "div.story-detail p, div.article-body p, div.content p, div.description p, p",
+        "image_selector": "meta[property='og:image'], .story-img img, .img-holder img, .image-container img, img[data-src], .sv_swiper img",
         "date_selector": "meta[property='article:published_time'], time, .story-date, .publish-date, .date-time, .story__time"
     },
     {
         "name": "ABP News",
         "url": "https://www.abplive.com",
         "article_link_selector": "a[href*='/news/']:not([href*='/videos/'], [href*='/live/'], [href*='/category/'], [href*='/photos/']), .news-card a, .story-item a",
-        "title_selector": "h1.story-heading, h1.title, h1.article-title",
-        "content_selector": ".story-content p, .article-text p, .detail-content p, .story-detail p, .article-body p",
+        "title_selector": "h1.story-heading, h1.title, h1.article-title, h1",
+        "content_selector": "div.story-content p, div.article-text p, div.detail-content p, div.story-detail p, div.article-body p, p",
         "image_selector": "meta[property='og:image'], .story-image img, .featured-img img, .article-img img, img[data-src]",
         "date_selector": "meta[property='article:published_time'], time, .date, .timestamp, .publish-date"
     },
     {
         "name": "Times of India",
         "url": "https://timesofindia.indiatimes.com",
-        "article_link_selector": "a[href*='/articleshow/']:not([href*='/videos/'], [href*='/photogallery/'], [href*='/category/']), .top-story a, .story a",
-        "title_selector": "h1.artTitle, h1.title, h1.headline",
-        "content_selector": "div._s30W p, div.artText p, div.article-content p, .article-body p",
-        "image_selector": "meta[property='og:image'], .artImg img, .featured-img img, img[data-src]",
+        "article_link_selector": "a[href*='/articleshow/'], a[href*='/news/']:not([href*='/videos/'], [href*='/photogallery/'], [href*='/category/']), .top-story a, .story a",
+        "title_selector": "h1._1Y-96, h1.artTitle, h1.title, h1.headline, h1",
+        "content_selector": "div._s30W p, div.artText p, div.article-content p, div.article-body p, p",
+        "image_selector": "meta[property='og:image'], .artImg img, .featured-img img, img[data-src], .lead-img img",
         "date_selector": "meta[property='article:published_time'], time, .byline time, .publish-date"
     },
     {
         "name": "Marathi Abplive",
         "url": "https://marathi.abplive.com",
         "article_link_selector": "a[href*='/news/']:not([href*='/videos/'], [href*='/live/'], [href*='/category/'], [href*='/photos/']), .news-card a, .story-item a",
-        "title_selector": "h1.story-heading, h1.title, h1.article-title",
-        "content_selector": ".story-content p, .article-text p, .detail-content p, .story-detail p, .article-body p",
+        "title_selector": "h1.story-heading, h1.title, h1.article-title, h1",
+        "content_selector": "div.story-content p, div.article-text p, div.detail-content p, div.story-detail p, div.article-body p, p",
         "image_selector": "meta[property='og:image'], .story-image img, .featured-img img, .article-img img, img[data-src]",
         "date_selector": "meta[property='article:published_time'], time, .date, .timestamp, .publish-date"
     },
     {
-        "name": "Zee Bihar Jharkhand",
-        "url": "https://zeenews.india.com/hindi/india/bihar-jharkhand",
-        "article_link_selector": "a[href*='/news/']:not([href*='/video/'], [href*='/live/'], [href*='/category/'], [href*='/photos/']), .story-box a, .news-item a, .news-card a",
-        "title_selector": "h1.content-heading, h1.news-title, h1.headline",
-        "content_selector": ".story-body p, .article-text p, .content-text p, .article-content p, .field-content p",
-        "image_selector": "meta[property='og:image'], .main-image img, .story-img img, .article-img img, img[data-src]",
-        "date_selector": "meta[property='article:published_time'], .date-time, time, .publish-date, .story-date"
-    },
-    {
-        "name": "First Bihar",
-        "url": "https://firstbihar.com",
-        "article_link_selector": "a[href*='/news/']:not([href*='/videos/'], [href*='/category/'], [href*='/photos/']), .news-card a, .top-stories a, .carousel-track a",
-        "title_selector": "h1.story-title, h1.title, h1.headline",
-        "content_selector": ".article-content p, .story-content p, .story-detail p, .article-body p",
-        "image_selector": "meta[property='og:image'], .article-img img, .story-img img, img[data-src]",
-        "date_selector": "meta[property='article:published_time'], time, .date-time, .publish-date, .story-date"
-    },
-    {
-        "name": "Zee News",
-        "url": "https://zeenews.india.com",
-        "article_link_selector": "a[href*='/news/']:not([href*='/video/'], [href*='/live/'], [href*='/category/'], [href*='/photos/']), .story-box a, .news-item a, .news-card a",
-        "title_selector": "h1.content-heading, h1.news-title, h1.headline",
-        "content_selector": ".story-body p, .article-text p, .content-text p, .article-content p, .field-content p",
-        "image_selector": "meta[property='og:image'], .main-image img, .story-img img, .article-img img, img[data-src]",
-        "date_selector": "meta[property='article:published_time'], .date-time, time, .publish-date, .story-date"
-    },
-    {
-        "name": "Dainik Jagran",
-        "url": "https://www.jagran.com",
-        "article_link_selector": "a[href*='/news/']:not([href*='/videos/'], [href*='/category/'], [href*='/photos/']), .news-card a, .top-stories a",
-        "title_selector": "h1.story-title, h1.title, h1.headline",
-        "content_selector": ".article-content p, .story-content p, .story-detail p, .article-body p",
-        "image_selector": "meta[property='og:image'], .article-img img, .story-img img, img[data-src]",
-        "date_selector": "meta[property='article:published_time'], time, .date-time, .publish-date, .story-date"
-    },
-    {
-        "name": "Hindustan",
-        "url": "https://www.livehindustan.com",
-        "article_link_selector": "a[href*='/news/']:not([href*='/videos/'], [href*='/category/'], [href*='/photos/']), .news-card a, .top-stories a",
-        "title_selector": "h1.story-title, h1.title, h1.headline",
-        "content_selector": ".article-content p, .story-content p, .story-detail p, .article-body p",
-        "image_selector": "meta[property='og:image'], .article-img img, .story-img img, img[data-src]",
-        "date_selector": "meta[property='article:published_time'], time, .date-time, .publish-date, .story-date"
-    },
-    {
-        "name": "Loksatta",
-        "url": "https://www.loksatta.com",
-        "article_link_selector": "a[href*='/news/']:not([href*='/videos/'], [href*='/category/'], [href*='/photos/']), .news-card a, .top-stories a",
-        "title_selector": "h1.story-title, h1.title, h1.headline",
-        "content_selector": ".article-content p, .story-content p, .story-detail p, .article-body p",
-        "image_selector": "meta[property='og:image'], .article-img img, .story-img img, img[data-src]",
-        "date_selector": "meta[property='article:published_time'], time, .date-time, .publish-date, .story-date"
-    },
-    {
-        "name": "CNN",
-        "url": "https://www.cnn.com",
-        "article_link_selector": "a[href*='/2025/']:not([href*='/videos/'], [href*='/category/']), .card a[href*='/articles/']",
-        "title_selector": "h1.article-title, h1.title, h1.headline",
-        "content_selector": ".article-content p, .story-content p, .article-body p",
-        "image_selector": "meta[property='og:image'], .article-img img, .featured-img img, img[data-src]",
-        "date_selector": "meta[property='article:published_time'], time, .publish-date, .date-time"
-    },
-    {
-        "name": "The Guardian",
-        "url": "https://www.theguardian.com",
-        "article_link_selector": "a[href*='/2025/']:not([href*='/video/'], [href*='/category/']), .fc-item__content a",
-        "title_selector": "h1.content__headline, h1.title, h1.headline",
-        "content_selector": ".content__article-body p, .article-content p, .article-body p",
-        "image_selector": "meta[property='og:image'], .gu-image img, .article-img img, img[data-src]",
-        "date_selector": "meta[property='article:published_time'], time, .dateline, .publish-date"
-    },
-    {
         "name": "BBC",
         "url": "https://www.bbc.com/news",
-        "article_link_selector": "a[href*='/news/articles/']:not([href*='/video/'], [href*='/category/']), .gs-c-promo-heading a",
-        "title_selector": "h1.ssrcss-15xko80-StyledHeading, h1.main-heading, h1.story-heading",
-        "content_selector": ".ssrcss-1q0x1qg-Paragraph p, .story-body__inner p, .article-body p",
+        "article_link_selector": "a[href*='/news/'], a[href*='/articles/']:not([href*='/video/'], [href*='/category/']), .gs-c-promo-heading a",
+        "title_selector": "h1[data-component='headline'], h1.main-heading, h1.story-heading, h1",
+        "content_selector": "div[data-component='text-block'] p, div.article-body p, div.story-body__inner p, p",
         "image_selector": "meta[property='og:image'], .ssrcss-1ki0h2t-Image img, .article-img img, img[data-src]",
         "date_selector": "meta[property='article:published_time'], time, .ssrcss-1r412x1-MetadataText, .publish-date"
     },
@@ -120,17 +48,17 @@
         "name": "India TV",
         "url": "https://www.indiatvnews.com",
         "article_link_selector": "a[href*='/news/']:not([href*='/video/'], [href*='/live/'], [href*='/category/'], [href*='/photos/']), .news-card a, .trending a",
-        "title_selector": "h1.article-title, h1.title, h1.headline",
-        "content_selector": ".article-body p, .content p, .story-content p, .content-detail p",
-        "image_selector": "meta[property='og:image'], .article-img img, .lead-img img, img[data-src]",
+        "title_selector": "h1.content-detail-title, h1.article-title, h1.title, h1.headline, h1",
+        "content_selector": "div.content p:not([class*='ad'], [class*='advertisement']), .article-body p, .content-detail p, .story-content p, p",
+        "image_selector": "meta[property='og:image'], .content img:not([class*='ad']), .lead-img img, .article-img img, img[data-src]",
         "date_selector": "meta[property='article:published_time'], time, .date, .timestamp, .publish-date"
     },
     {
         "name": "News 18",
         "url": "https://hindi.news18.com",
         "article_link_selector": "a[href*='/news/']:not([href*='/videos/'], [href*='/category/'], [href*='/photos/']), .news-list a, .top-news a",
-        "title_selector": "h1.story-title, h1.title, h1.headline",
-        "content_selector": ".article-content p, .story-body p, .content-body p, .story-detail p",
+        "title_selector": "h1.story-title, h1.title, h1.headline, h1",
+        "content_selector": "div.article-content p, div.story-body p, div.content-body p, div.story-detail p, p",
         "image_selector": "meta[property='og:image'], .article-img img, .story-img img, img[data-src]",
         "date_selector": "meta[property='article:published_time'], time, .date, .timestamp, .publish-date"
     },
@@ -138,9 +66,27 @@
         "name": "Amar Ujala",
         "url": "https://www.amarujala.com",
         "article_link_selector": "a[href*='/news/']:not([href*='/videos/'], [href*='/category/'], [href*='/photos/']), .news-list a, .top-stories a",
-        "title_selector": "h1.story-title, h1.title, h1.headline",
-        "content_selector": ".article-content p, .story-content p, .story-detail p, .article-body p",
+        "title_selector": "h1.story-title, h1.title, h1.headline, h1",
+        "content_selector": "div.story-content p, div.article-body p, div.story-detail p, div.article-content p, p",
         "image_selector": "meta[property='og:image'], .article-img img, .story-img img, img[data-src]",
         "date_selector": "meta[property='article:published_time'], time, .date-time, .publish-date"
+    },
+    {
+        "name": "First Bihar",
+        "url": "https://firstbihar.com",
+        "article_link_selector": "a[href*='/news/'], a[href*='/story/']:not([href*='/video/'], [href*='/live/'], [href*='/category/'])",
+        "title_selector": "h1, h2.news-title, h2.story-title, h2",
+        "content_selector": "div.story-content p, div.article-content p, div.content p, p",
+        "image_selector": "meta[property='og:image'], .news-img img, .story-img img, .image-container img, img[data-src]",
+        "date_selector": "meta[property='article:published_time'], time, .date-time, .publish-date"
+    },
+    {
+        "name": "Dainik Jagran",
+        "url": "https://www.jagran.com",
+        "article_link_selector": "a[href*='/news/'], a[href*='/story/']:not([href*='/videos/'], [href*='/category/'])",
+        "title_selector": "h1.artTitle, h1.title, h1.headline, h1",
+        "content_selector": "div.articleBody p, div.content-body p, div.story-content p, p",
+        "image_selector": "meta[property='og:image'], .article-img img, .main-img img, .story-img img, img[data-src]",
+        "date_selector": "meta[property='article:published_time'], time, .date, .publish-time"
     }
 ]
