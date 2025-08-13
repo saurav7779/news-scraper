@@ -14,18 +14,19 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - name: Check and remove existing chromedriver
-        run: |
-          ls -l /usr/bin/chromedriver || echo "No chromedriver found"
-          sudo rm -f /usr/bin/chromedriver
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip chromium-browser chromium-chromedriver
-          pip install --no-cache-dir -r requirements.txt
-      - name: Verify selenium installation
+          sudo apt-get install -y chromium-browser chromium-chromedriver
+          sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
+      - name: Install Python dependencies
         run: |
-          python -c "import selenium; print(selenium.__version__)"
+          pip install --no-cache-dir -r requirements.txt
+      - name: Verify dependencies
+        run: |
+          python -c "import selenium; print('Selenium version:', selenium.__version__)"
+          python -c "import langdetect; print('Langdetect installed')"
+          python -c "import dateutil.parser; print('Dateutil.parser installed')"
       - name: Run scraper
         env:
           FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
