@@ -17,8 +17,9 @@ from dateutil.parser import parse
 
 # Handle Firebase key from env (for GitHub Actions)
 firebase_key_content = os.environ.get('FIREBASE_KEY')
+firebase_key_file = 'firebase_key.json'
 if firebase_key_content:
-    with open('firebase_key.json', 'w') as f:
+    with open(firebase_key_file, 'w') as f:
         f.write(firebase_key_content)
 else:
     print("Warning: FIREBASE_KEY env not set, using local file if exists.")
@@ -30,7 +31,7 @@ else:
 
 # Initialize Firebase
 try:
-    cred = credentials.Certificate(firebase_key_content)
+    cred = credentials.Certificate(firebase_key_file)
     firebase_admin.initialize_app(cred)
     db = firestore.client()
 except Exception as e:
@@ -249,3 +250,4 @@ def scrape_and_save():
 
 if __name__ == "__main__":
     scrape_and_save()
+
