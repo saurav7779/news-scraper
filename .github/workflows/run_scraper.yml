@@ -26,8 +26,12 @@ jobs:
           python -c "import selenium; print('Selenium version:', selenium.__version__)"
           python -c "import langdetect; print('Langdetect installed')"
           python -c "import dateutil.parser; print('Dateutil.parser installed')"
-      - name: Run scraper
+          python -c "import torch; print('PyTorch version:', torch.__version__)"
+      - name: Write Firebase key to file
         env:
           FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
+        run: |
+          echo "$FIREBASE_KEY" > serviceAccountKey.json
+      - name: Run scraper
         run: |
           python scraper.py
