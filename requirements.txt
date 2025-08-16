@@ -1,6 +1,7 @@
 requests
 beautifulsoup4
 transformers
+torch==2.4.1
 googletrans==4.0.0-rc1
 firebase-admin
 selenium
