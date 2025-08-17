@@ -18,6 +18,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y chromium-browser chromium-chromedriver
+      - name: Install Playwright dependencies
+        run: |
+          pip install playwright
+          playwright install --with-deps
       - name: Install Python dependencies
         run: |
           pip install --no-cache-dir -r requirements.txt
@@ -27,15 +31,17 @@ jobs:
           python -c "import langdetect; print('Langdetect installed')"
           python -c "import dateutil.parser; print('Dateutil.parser installed')"
           python -c "import torch; print('PyTorch version:', torch.__version__)"
+          python -c "import playwright; print('Playwright installed')"
       - name: Write Firebase key to file
         env:
           FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
         run: |
-          if [ -z "$FIREBASE_KEY" ]; then echo "FIREBASE_KEY is empty!"; exit 1; fi
+          if [ -z "$FIREBASE_KEY" ]; then echo "🚨 FIREBASE_KEY is empty or not set!"; exit 1; fi
           echo "$FIREBASE_KEY" > serviceAccountKey.json
+          echo "Firebase key file created: serviceAccountKey.json"
       - name: Verify Firebase key file
         run: |
-          if [ -f "serviceAccountKey.json" ]; then echo "Firebase key file created."; else echo "Firebase key file not found!"; exit 1; fi
+          if [ -f "serviceAccountKey.json" ]; then echo "Firebase key file exists."; else echo "🚨 Firebase key file not found!"; exit 1; fi
       - name: Run scraper
         run: |
           python scraper.py
