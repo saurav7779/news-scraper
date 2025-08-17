@@ -31,7 +31,11 @@ jobs:
         env:
           FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
         run: |
+          if [ -z "$FIREBASE_KEY" ]; then echo "FIREBASE_KEY is empty!"; exit 1; fi
           echo "$FIREBASE_KEY" > serviceAccountKey.json
+      - name: Verify Firebase key file
+        run: |
+          if [ -f "serviceAccountKey.json" ]; then echo "Firebase key file created."; else echo "Firebase key file not found!"; exit 1; fi
       - name: Run scraper
         run: |
           python scraper.py
