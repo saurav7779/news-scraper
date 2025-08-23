@@ -6,5 +6,5 @@ langid>=1.1.6
 python-dateutil>=2.8.2
 firebase-admin>=6.5.0
 torch>=2.0.0
-selenium>=4.16.0
 playwright>=1.47.0
+sentence-transformers>=2.2.2
