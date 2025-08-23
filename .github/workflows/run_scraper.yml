@@ -32,8 +32,8 @@ jobs:
           echo "python-dateutil>=2.8.2" >> requirements.txt
           echo "firebase-admin>=6.5.0" >> requirements.txt
           echo "torch>=2.0.0" >> requirements.txt
-          echo "selenium>=4.16.0" >> requirements.txt
           echo "playwright>=1.47.0" >> requirements.txt
+          echo "sentence-transformers>=2.2.2" >> requirements.txt
       - name: Install Python dependencies
         run: |
           pip install --no-cache-dir -r requirements.txt
@@ -42,23 +42,23 @@ jobs:
           python -c "import requests; print('Requests version:', requests.__version__)"
           python -c "import bs4; print('BeautifulSoup version:', bs4.__version__)"
           python -c "import transformers; print('Transformers version:', transformers.__version__)"
-          python -c "import deep_translator; print('Deep Translator installed')"
+          python -c "import deep_translator; print('Deep Translator version:', deep_translator.__version__)"
           python -c "import langid; print('Langid installed')"
           python -c "import dateutil.parser; print('Dateutil.parser installed')"
           python -c "import firebase_admin; print('Firebase Admin installed')"
           python -c "import torch; print('PyTorch version:', torch.__version__)"
-          python -c "import selenium; print('Selenium version:', selenium.__version__)"
           python -c "import playwright; print('Playwright installed')"
+          python -c "import sentence_transformers; print('Sentence Transformers version:', sentence_transformers.__version__)"
       - name: Write Firebase key to file
         env:
           FIREBASE_KEY: ${{ secrets.FIREBASE_KEY }}
         run: |
           if [ -z "$FIREBASE_KEY" ]; then echo "🚨 FIREBASE_KEY is empty or not set!"; exit 1; fi
-          echo "$FIREBASE_KEY" > serviceAccountKey.json
-          echo "Firebase key file created: serviceAccountKey.json"
+          echo "$FIREBASE_KEY" > firebase_key.json
+          echo "Firebase key file created: firebase_key.json"
       - name: Verify Firebase key file
         run: |
-          if [ -f "serviceAccountKey.json" ]; then echo "Firebase key file exists."; else echo "🚨 Firebase key file not found!"; exit 1; fi
+          if [ -f "firebase_key.json" ]; then echo "Firebase key file exists."; else echo "🚨 Firebase key file not found!"; exit 1; fi
       - name: Run scraper
         run: |
           python scraper.py
