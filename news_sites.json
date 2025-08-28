@@ -165,15 +165,7 @@
         "image_selector": "meta[property='og:image'], .article-img img, .story-img img, img[data-src], img",
         "date_selector": "meta[property='article:published_time'], time, .date-time, .publish-date, .story-date"
     },
-    {
-        "name": "BBC",
-        "url": "https://www.bbc.com/news",
-        "article_link_selector": "a[href*='/news/articles/']:not([href*='/video/'], [href*='/category/']), .gs-c-promo-heading a, .article-box a",
-        "title_selector": "h1.ssrcss-15xko80-StyledHeading, h1.main-heading, h1.story-heading, h1, meta[property='og:title'], title",
-        "content_selector": ".ssrcss-1q0x1qg-Paragraph p, .story-body__inner p, .article-body p, article p, p",
-        "image_selector": "meta[property='og:image'], .ssrcss-1ki0h2t-Image img, .article-img img, img[data-src], img",
-        "date_selector": "meta[property='article:published_time'], time, .ssrcss-1r412x1-MetadataText, .publish-date"
-    },
+    
     
     {
         "name": "News 18",
@@ -183,15 +175,6 @@
         "content_selector": ".article-content p, .story-body p, .content-body p, .story-detail p, article p, p",
         "image_selector": "meta[property='og:image'], .article-img img, .story-img img, img[data-src], img",
         "date_selector": "meta[property='article:published_time'], time, .date, .timestamp, .publish-date"
-    },
-    {
-        "name": "Times of India",
-        "url": "https://timesofindia.indiatimes.com",
-        "article_link_selector": "a[href*='/articleshow/']:not([href*='/videos/'], [href*='/photogallery/'], [href*='/category/']), a.story__link, a.top-story, .article-box a",
-        "title_selector": "h1.artTitle, h1.title, h1.headline, h1, meta[property='og:title'], title",
-        "content_selector": "div._s30W, div.artText, div.article-content, div.articleBody, div.content, article, .articlebody",
-        "image_selector": "meta[property='og:image'], .artImg img, .featured-img img, img[data-src], img",
-        "date_selector": "meta[property='article:published_time'], time, .byline time, .publish-date"
     },
     {
         "name": "Marathi Abplive",
@@ -211,24 +194,8 @@
         "image_selector": "meta[property='og:image'], .article-img img, .story-img img, img[data-src], img",
         "date_selector": "meta[property='article:published_time'], time, .date-time, .publish-date, .story-date"
     },
-    {
-        "name": "CNN",
-        "url": "https://www.cnn.com",
-        "article_link_selector": "a[href*='/2025/']:not([href*='/videos/'], [href*='/category/']), .card a[href*='/articles/'], .article-box a",
-        "title_selector": "h1.article-title, h1.title, h1.headline, h1, meta[property='og:title'], title",
-        "content_selector": ".article-content p, .story-content p, .article-body p, article p, p",
-        "image_selector": "meta[property='og:image'], .article-img img, .featured-img img, img[data-src], img",
-        "date_selector": "meta[property='article:published_time'], time, .publish-date, .date-time"
-    },
-    {
-        "name": "The Guardian",
-        "url": "https://www.theguardian.com",
-        "article_link_selector": "a[href*='/2025/']:not([href*='/video/'], [href*='/category/']), .fc-item__content a, .article-box a",
-        "title_selector": "h1.content__headline, h1.title, h1.headline, h1, meta[property='og:title'], title",
-        "content_selector": ".content__article-body p, .article-content p, .article-body p, article p, p",
-        "image_selector": "meta[property='og:image'], .gu-image img, .article-img img, img[data-src], img",
-        "date_selector": "meta[property='article:published_time'], time, .dateline, .publish-date"
-    },
+    
+    
     {
         "name": "The Hindu",
         "url": "https://www.thehindu.com/news/",
@@ -239,3 +206,4 @@
         "date_selector": "meta[property='article:published_time'], time, .date, .publish-date"
     }
 ]
+
