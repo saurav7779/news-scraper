@@ -797,16 +797,16 @@ def scrape_and_save():
                         filtered_content = []
                         for elem in content_elements:
                             elem_text = clean_text(elem.get_text(strip=True))
-                            if (len(elem_text) > 30 and 
-                                not any(x in elem_text.lower() for x in [
-                                    'advertisement', 'sponsored', 'read more', 'toi tech desk',
-                                    'click here', 'follow us', 'share this', 'comment now',
-                                    'latest news', 'trending now', 'recommended', 'related news',
-                                    'copyright', 'privacy policy', 'terms of use', 'cookie policy',
-                                    'subscribe', 'newsletter', 'download app'
-                                ]) and
-                                not re.search(r'₹\d+,\d+', elem_text) and
-                                not re.search(r'^\d+\s*\.?\s*, elem_text)):
+                           if (len(elem_text) > 30 and 
+    not any(x in elem_text.lower() for x in [
+        'advertisement', 'sponsored', 'read more', 'toi tech desk',
+        'click here', 'follow us', 'share this', 'comment now',
+        'latest news', 'trending now', 'recommended', 'related news',
+        'copyright', 'privacy policy', 'terms of use', 'cookie policy',
+        'subscribe', 'newsletter', 'download app'
+    ]) and
+    not re.search(r'₹\d+,\d+', elem_text) and
+    not re.search(r'^\d+\s*\.?\s*', elem_text)):
                                 filtered_content.append(elem_text)
                         
                         if filtered_content and len(' '.join(filtered_content)) > 200:
@@ -1052,3 +1052,4 @@ def scrape_and_save():
 
 if __name__ == "__main__":
     scrape_and_save()
+
