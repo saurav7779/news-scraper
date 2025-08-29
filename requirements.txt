@@ -1,8 +1,8 @@
 requests>=2.31.0
 beautifulsoup4>=4.12.2
 transformers>=4.35.0
-torch>=2.0.0,<2.1.0
-deep-translator>=1.11.4
+torch>=2.0.0,<2.1.0 (specific constraint added)
+deep-translator>=1.11.4 (replaced deep_translator to match package name)
 langid>=1.1.6
 python-dateutil>=2.8.2
 firebase-admin>=6.5.0
