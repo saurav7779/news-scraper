@@ -27,11 +27,11 @@ jobs:
           echo "requests>=2.31.0" > requirements.txt
           echo "beautifulsoup4>=4.12.2" >> requirements.txt
           echo "transformers>=4.35.0" >> requirements.txt
+          echo "torch>=2.0.0,<2.1.0" >> requirements.txt
           echo "deep-translator>=1.11.4" >> requirements.txt
           echo "langid>=1.1.6" >> requirements.txt
           echo "python-dateutil>=2.8.2" >> requirements.txt
           echo "firebase-admin>=6.5.0" >> requirements.txt
-          echo "torch>=2.0.0" >> requirements.txt
           echo "playwright>=1.47.0" >> requirements.txt
           echo "sentence-transformers>=2.2.2" >> requirements.txt
       - name: Install Python dependencies
