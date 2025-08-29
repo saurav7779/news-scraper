@@ -6,7 +6,7 @@ import re
 import os
 from bs4 import BeautifulSoup
 from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
-from deep_translator import GoogleTranslator
+import translators as ts
 from datetime import datetime, date, timedelta
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -17,23 +17,23 @@ import logging
 from sentence_transformers import SentenceTransformer, util
 import pickle
 from collections import defaultdict
+import hashlib
 
-# Logging setup with emojis for professional debugging
+# Logging setup with emojis
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Custom logging with emojis
 def log_error(msg):
-    logger.error(f"ðŸš¨ ðŸš¨ {msg}")
+    logger.error(f"🚨 🚨 {msg}")
 
 def log_warning(msg):
-    logger.warning(f"âš ï¸ {msg}")
+    logger.warning(f"⚠️ {msg}")
 
 def log_info(msg):
-    logger.info(f"âœ… {msg}")
+    logger.info(f"✅ {msg}")
 
 def log_debug(msg):
-    logger.debug(f"ðŸ“ {msg}")
+    logger.debug(f"📝 {msg}")
 
 # Firebase setup
 firebase_key_content = os.environ.get('FIREBASE_KEY')
@@ -56,7 +56,7 @@ except Exception as e:
     log_error(f"Error loading news_sites.json: {e}")
     exit(1)
 
-# Initialize summarizer with BART-large-CNN
+# Initialize summarizer
 summarizer = None
 tokenizer = None
 try:
@@ -67,20 +67,25 @@ except Exception as e:
     log_warning(f"Model Error: {e}. No summarization.")
     summarizer = None
 
-# Initialize sentence transformer for semantic similarity
+# Initialize sentence transformer
 try:
     similarity_model = SentenceTransformer('all-MiniLM-L6-v2')
 except Exception as e:
     log_warning(f"Sentence Transformer Error: {e}. Similarity checks disabled.")
     similarity_model = None
 
-# Cache setup for article URLs and content embeddings
+# Cache setup
 cache_file = 'article_cache.pkl'
+translation_cache_file = 'translation_cache.pkl'
 article_cache = {}
+translation_cache = {}
 try:
     if os.path.exists(cache_file):
         with open(cache_file, 'rb') as f:
             article_cache = pickle.load(f)
+    if os.path.exists(translation_cache_file):
+        with open(translation_cache_file, 'rb') as f:
+            translation_cache = pickle.load(f)
 except Exception as e:
     log_warning(f"Cache Load Error: {e}")
 
@@ -103,7 +108,7 @@ def get_random_headers():
 def clean_text(text):
     if not text:
         return ''
-    text = re.sub(r'(summarize|generate|in|concise|factual|manner|key points|excluding|opinions|minor details|words|80-150|15-30).*?:', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'(summarize|generate|in|concise|factual|manner|key points|excluding|opinions|minor details|words|80-150|60-80|10-15).*?:', '', text, flags=re.IGNORECASE)
     text = re.sub(r'\s+', ' ', text.replace('OPINION |', '').strip())
     return text
 
@@ -132,25 +137,35 @@ def is_valid_translation(text, target_lang):
     invalid_patterns = ['MYMEMORY WARNING', 'Unable to translate', 'Translation failed']
     return not any(pattern.lower() in text.lower() for pattern in invalid_patterns)
 
-def translate_text(text, target_lang='hi', source_lang='auto', retries=5):
+def translate_text(text, target_lang='hi', source_lang='auto', retries=3):
     if not text or len(text.strip()) < 5 or source_lang == target_lang:
         return text
+    cache_key = hashlib.md5(f"{text}_{source_lang}_{target_lang}".encode()).hexdigest()
+    if cache_key in translation_cache:
+        log_info(f"Using cached translation for {cache_key}: {translation_cache[cache_key][:50]}...")
+        return translation_cache[cache_key]
+    
     for attempt in range(retries):
         try:
-            time.sleep(random.uniform(1, 2))
-            translator = GoogleTranslator(source=source_lang, target=target_lang)
-            translated = translator.translate(text)
+            time.sleep(random.uniform(5, 10))
+            translated = ts.translate_text(text, from_language=source_lang, to_language=target_lang)
             if (translated and 
                 len(translated.strip()) > 3 and 
                 translated.strip().lower() != text.strip().lower() and
                 is_valid_translation(translated, target_lang)):
-                log_info(f"ðŸ“ Translated to {target_lang}: {translated[:50]}...")
+                log_info(f"📝 Translated to {target_lang}: {translated[:50]}...")
+                translation_cache[cache_key] = translated
+                try:
+                    with open(translation_cache_file, 'wb') as f:
+                        pickle.dump(translation_cache, f)
+                except Exception as e:
+                    log_warning(f"Translation Cache Save Error: {e}")
                 return translated
             log_warning(f"Invalid translation to {target_lang}: '{translated}' (Original: '{text}')")
         except Exception as e:
             log_warning(f"Translation error for {target_lang} (Attempt {attempt+1}/{retries}): {e}")
         if attempt < retries - 1:
-            time.sleep(random.uniform(2, 4))
+            time.sleep(random.uniform(5, 10))
     log_error(f"Translation failed for {target_lang}, returning original text")
     return text
 
@@ -180,9 +195,9 @@ def extract_date(soup, selector):
 def is_valid_date(date_str, scrape_date):
     try:
         article_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        return article_date <= scrape_date and article_date >= scrape_date - timedelta(days=7)
+        return article_date <= scrape_date and article_date >= scrape_date - timedelta(days=2)  # 48 hours
     except:
-        return True
+        return False
 
 def is_valid_article_url(url, site_name, site):
     if not url or "404" in url.lower() or "page not found" in url.lower():
@@ -247,8 +262,8 @@ def detect_repetition(summary):
     ngrams = set()
     for sentence in sentences:
         words = sentence.lower().split()
-        for i in range(len(words) - 2):
-            ngram = ' '.join(words[i:i+3])
+        for i in range(len(words) - 1):
+            ngram = ' '.join(words[i:i+2])
             if ngram in ngrams:
                 return True
             ngrams.add(ngram)
@@ -263,38 +278,80 @@ def check_title_similarity(title, content):
         content_embedding = similarity_model.encode(' '.join(content_sentences), convert_to_tensor=True)
         similarity = util.cos_sim(title_embedding, content_embedding).item()
         log_debug(f"Title similarity score: {similarity:.2f} for title: {title[:50]}...")
-        return similarity > 0.3  # Relaxed threshold
+        return similarity > 0.3
     except:
         return True
+
+def extract_state_district(content):
+    states = {
+        'Andhra Pradesh': ['andhra pradesh', 'amaravati', 'visakhapatnam', 'vijayawada'],
+        'Bihar': ['bihar', 'patna', 'gaya', 'muzaffarpur'],
+        'Delhi': ['delhi', 'new delhi'],
+        'Uttar Pradesh': ['uttar pradesh', 'lucknow', 'kanpur', 'varanasi'],
+        'Maharashtra': ['maharashtra', 'mumbai', 'pune', 'nagpur'],
+        'Karnataka': ['karnataka', 'bangalore', 'bengaluru', 'mysore'],
+        'Tamil Nadu': ['tamil nadu', 'chennai', 'coimbatore', 'madurai'],
+        'West Bengal': ['west bengal', 'kolkata', 'howrah', 'durgapur']
+    }
+    content_lower = content.lower()
+    state, district = 'Unknown', 'Unknown'
+    for st, keywords in states.items():
+        for keyword in keywords:
+            if keyword in content_lower:
+                state = st
+                district = keyword if keyword not in [st.lower(), 'new delhi'] else 'Unknown'
+                break
+        if state != 'Unknown':
+            break
+    return state, district
+
+def detect_category(title, content):
+    categories = {
+        'defence': ['defence', 'military', 'fighter', 'jet', 'aircraft', 'tejas', 'hal', 'aerospace', 'safran', 'missile', 'army', 'navy', 'air force'],
+        'international': ['international', 'global', 'foreign', 'diplomacy', 'visa', 'immigration', 'united nations', 'summit', 'trade agreement'],
+        'politics': ['election', 'government', 'minister', 'pm', 'cm', 'parliament', 'congress', 'bjp', 'political', 'policy', 'law', 'bill', 'act', 'prime minister', 'president'],
+        'sports': ['cricket', 'football', 'match', 'sport', 'player', 'tournament', 'olympics', 'medal', 'coach', 'team', 'ipl', 'world cup', 'championship'],
+        'business': ['market', 'stock', 'business', 'economy', 'company', 'industry', 'trade', 'commerce', 'gst', 'tax', 'investment', 'finance', 'bank', 'rupee', 'dollar'],
+        'entertainment': ['movie', 'film', 'actor', 'bollywood', 'hollywood', 'celebrity', 'music', 'song', 'album', 'director', 'entertainment', 'actor', 'actress'],
+        'crime': ['crime', 'arrest', 'police', 'murder', 'theft', 'robbery', 'accident', 'investigation', 'court', 'judge', 'lawyer', 'case', 'illegal', 'violation', 'homicide', 'fraud'],
+        'technology': ['technology', 'tech', 'computer', 'mobile', 'app', 'software', 'internet', 'digital', 'ai', 'artificial intelligence', 'smartphone', 'social media', 'iphone', 'foxconn', 'apple'],
+        'health': ['health', 'medical', 'hospital', 'doctor', 'disease', 'medicine', 'vaccine', 'covid', 'corona', 'healthcare', 'treatment', 'patient'],
+        'education': ['education', 'school', 'college', 'university', 'student', 'teacher', 'exam', 'result', 'education', 'board', 'degree', 'internship']
+    }
+    text = (title.lower() * 2 + ' ' + content.lower())
+    category_scores = {cat: 0 for cat in categories}
+    for cat, keywords in categories.items():
+        for keyword in keywords:
+            if keyword in text:
+                category_scores[cat] += 2 if keyword in title.lower() else 1
+    max_score = max(category_scores.values())
+    if max_score == 0:
+        return 'general'
+    return max(category_scores, key=category_scores.get)
 
 def summarize_text(text, is_title=False, source_lang='en'):
     if not summarizer or not text or len(text.strip()) < 10:
         log_warning("Summarizer not available or text too short, using fallback")
         sentences = text.split('. ')
         relevant_sentences = [s for s in sentences if len(s.split()) > 3 and not any(x in s.lower() for x in ['advertisement', 'sponsored', 'read more'])]
-        fallback_summary = ' '.join(relevant_sentences[:3])[:500]
         if is_title:
             if relevant_sentences:
-                fallback_title = clean_text(' '.join(relevant_sentences[0].split()[:25]))
-            else:
-                fallback_title = clean_text(' '.join(text.split()[:25]))
-            return fallback_title
+                fallback_title = clean_text(' '.join(relevant_sentences[0].split()[:15]))
+                if count_words(fallback_title) < 10:
+                    extra_words = relevant_sentences[1].split()[:15-count_words(fallback_title)] if len(relevant_sentences) > 1 else text.split()[:15-count_words(fallback_title)]
+                    fallback_title = clean_text(fallback_title + ' ' + ' '.join(extra_words))
+                return fallback_title[:100], count_words(fallback_title) >= 10 and count_words(fallback_title) <= 15
+            return clean_text(' '.join(text.split()[:15]))[:100], False
+        fallback_summary = ' '.join(relevant_sentences[:3])[:500]
         summary_words = fallback_summary.split()
-        if len(summary_words) > 150:
-            return clean_text(' '.join(summary_words[:150]))
-        elif len(summary_words) < 80:
-            extra_sentences = relevant_sentences[3:10]
+        if len(summary_words) > 80:
+            return clean_text(' '.join(summary_words[:80])) + '.', False
+        elif len(summary_words) < 60:
+            extra_sentences = relevant_sentences[3:5]
             if extra_sentences:
-                fallback_summary = f"{fallback_summary} {' '.join(extra_sentences)}"[:600]
-                summary_words = fallback_summary.split()
-                if len(summary_words) < 80:
-                    more_sentences = relevant_sentences[10:15]
-                    if more_sentences:
-                        fallback_summary = f"{fallback_summary} {' '.join(more_sentences)}"[:600]
-        if not fallback_summary.endswith('.'):
-            fallback_summary += '.'
-        return clean_text(fallback_summary)
-    
+                fallback_summary = f"{fallback_summary} {' '.join(extra_sentences)}"[:500]
+        return clean_text(fallback_summary[:500]) + '.', False
+
     try:
         english_text = text
         if source_lang != 'en':
@@ -303,161 +360,121 @@ def summarize_text(text, is_title=False, source_lang='en'):
                 log_warning("Translation to English failed, using fallback")
                 sentences = text.split('. ')
                 relevant_sentences = [s for s in sentences if len(s.split()) > 3 and not any(x in s.lower() for x in ['advertisement', 'sponsored', 'read more'])]
-                fallback_summary = ' '.join(relevant_sentences[:3])[:500]
                 if is_title:
                     if relevant_sentences:
-                        return clean_text(' '.join(relevant_sentences[0].split()[:25]))
-                    return clean_text(' '.join(text.split()[:25]))
+                        fallback_title = clean_text(' '.join(relevant_sentences[0].split()[:15]))
+                        if count_words(fallback_title) < 10:
+                            extra_words = relevant_sentences[1].split()[:15-count_words(fallback_title)] if len(relevant_sentences) > 1 else text.split()[:15-count_words(fallback_title)]
+                            fallback_title = clean_text(fallback_title + ' ' + ' '.join(extra_words))
+                        return fallback_title[:100], False
+                    return clean_text(' '.join(text.split()[:15]))[:100], False
+                fallback_summary = ' '.join(relevant_sentences[:3])[:500]
                 summary_words = fallback_summary.split()
-                if len(summary_words) > 150:
-                    return clean_text(' '.join(summary_words[:150]))
-                elif len(summary_words) < 80:
-                    extra_sentences = relevant_sentences[3:10]
+                if len(summary_words) > 80:
+                    return clean_text(' '.join(summary_words[:80])) + '.', False
+                elif len(summary_words) < 60:
+                    extra_sentences = relevant_sentences[3:5]
                     if extra_sentences:
-                        fallback_summary = f"{fallback_summary} {' '.join(extra_sentences)}"[:600]
-                        summary_words = fallback_summary.split()
-                        if len(summary_words) < 80:
-                            more_sentences = relevant_sentences[10:15]
-                            if more_sentences:
-                                fallback_summary = f"{fallback_summary} {' '.join(more_sentences)}"[:600]
-                if not fallback_summary.endswith('.'):
-                    fallback_summary += '.'
-                return clean_text(fallback_summary)
-        
-        max_length = 30 if is_title else 150
-        min_length = 8 if is_title else 80
+                        fallback_summary = f"{fallback_summary} {' '.join(extra_sentences)}"[:500]
+                return clean_text(fallback_summary[:500]) + '.', False
+
+        max_length = 15 if is_title else 80
+        min_length = 10 if is_title else 60
         input_tokens = len(tokenizer.encode(english_text, truncation=True))
         log_debug(f"BART input length: {input_tokens} tokens")
         summary = summarizer(
             english_text,
             max_length=max_length,
             min_length=min_length,
-            do_sample=True,
-            top_k=50,
-            top_p=0.9,
-            num_beams=12,
-            length_penalty=1.2,
+            do_sample=False,
+            num_beams=6,
+            length_penalty=1.0,
             early_stopping=True,
             truncation=True
         )[0]['summary_text']
-        log_debug(f"BART raw output: {summary[:100]}... (Words: {count_words(summary)})")
-        
         summary = clean_text(summary)
         
-        if any(x in summary.lower() for x in ['summarize', 'in 80-150', 'in 15-30', 'generate']) or (is_title and not check_title_similarity(summary, english_text)):
+        if any(x in summary.lower() for x in ['summarize', 'in 60-80', 'in 10-15']) or (is_title and not check_title_similarity(summary, english_text)):
             log_warning(f"Invalid summary: {summary[:50]}... Using fallback (Words: {count_words(summary)}, Similarity: {check_title_similarity(summary, english_text)})")
             sentences = english_text.split('. ')
             relevant_sentences = [s for s in sentences if len(s.split()) > 3 and not any(x in s.lower() for x in ['advertisement', 'sponsored', 'read more'])]
             if is_title:
                 if relevant_sentences:
-                    summary = clean_text(' '.join(relevant_sentences[0].split()[:25]))
+                    summary = clean_text(' '.join(relevant_sentences[0].split()[:15]))
+                    if count_words(summary) < 10:
+                        extra_words = relevant_sentences[1].split()[:15-count_words(summary)] if len(relevant_sentences) > 1 else english_text.split()[:15-count_words(summary)]
+                        summary = clean_text(summary + ' ' + ' '.join(extra_words))
                 else:
-                    summary = clean_text(' '.join(english_text.split()[:25]))
+                    summary = clean_text(' '.join(english_text.split()[:15]))
+                return summary[:100], False
             else:
-                summary = ' '.join(relevant_sentences[:5])[:600]
+                summary = ' '.join(relevant_sentences[:3])[:500]
                 summary_words = summary.split()
-                if len(summary_words) > 150:
-                    summary = ' '.join(summary_words[:150])
-                elif len(summary_words) < 80:
-                    extra_sentences = relevant_sentences[5:10]
+                if len(summary_words) > 80:
+                    summary = ' '.join(summary_words[:80])
+                elif len(summary_words) < 60:
+                    extra_sentences = relevant_sentences[3:5]
                     if extra_sentences:
-                        summary = f"{summary} {' '.join(extra_sentences)}"[:600]
-                        summary_words = summary.split()
-                        if len(summary_words) < 80:
-                            more_sentences = relevant_sentences[10:15]
-                            if more_sentences:
-                                summary = f"{summary} {' '.join(more_sentences)}"[:600]
-                if not summary.endswith('.'):
-                    summary += '.'
+                        summary = f"{summary} {' '.join(extra_sentences)}"[:500]
+                summary += '.'
+                return summary, False
         
         if source_lang != 'en':
             summary = translate_text(summary, source_lang, 'en')
         
         summary_words = summary.split()
         word_count = len(summary_words)
-        if not is_title:
-            if word_count > 150:
-                summary = ' '.join(summary_words[:150])
-                log_info(f"Trimmed summary to 150 words: {word_count} -> 150")
-            elif word_count < 80:
+        is_valid = True
+        if is_title:
+            if word_count > 15:
+                summary = ' '.join(summary_words[:15])
+                is_valid = False
+            elif word_count < 10:
+                sentences = english_text.split('. ')
+                relevant_sentences = [s for s in sentences if len(s.split()) > 3 and not any(x in s.lower() for x in ['advertisement', 'sponsored', 'read more'])]
+                extra_words = relevant_sentences[0].split()[:15-word_count] if relevant_sentences else english_text.split()[:15-word_count]
+                summary = clean_text(' '.join(summary_words + extra_words))
+                is_valid = False
+            log_info(f"Generated title (Words: {len(summary.split())})")
+            return clean_text(summary[:100]), word_count >= 10 and word_count <= 15
+        else:
+            if word_count > 80:
+                summary = ' '.join(summary_words[:80])
+                is_valid = False
+            elif word_count < 60:
                 sentences = english_text.split('. ')
                 relevant_sentences = [s for s in sentences if len(s.split()) > 3 and not any(x in s.lower() for x in ['advertisement', 'sponsored', 'read more'])]
                 extra_sentences = []
                 current_count = word_count
                 for sentence in relevant_sentences:
                     sentence_words = sentence.split()
-                    if current_count + len(sentence_words) <= 150:
+                    if current_count + len(sentence_words) <= 80:
                         extra_sentences.append(sentence)
                         current_count += len(sentence_words)
-                    if current_count >= 80:
+                    if current_count >= 60:
                         break
                 if extra_sentences:
-                    summary = f"{summary} {' '.join(extra_sentences)}"
-                    summary_words = summary.split()
-                    if len(summary_words) < 80:
-                        more_sentences = relevant_sentences[10:15]
-                        if more_sentences:
-                            summary = f"{summary} {' '.join(more_sentences)}"[:600]
-                    log_info(f"Padded summary to {len(summary.split())} words: {word_count} -> {len(summary.split())}")
-                else:
-                    summary = ' '.join(english_text.split()[:150])
-                    log_info(f"Fallback padding to 80 words: {word_count} -> {len(summary.split())}")
-                if not summary.endswith('.'):
-                    summary += '.'
+                    summary = f"{summary} {' '.join(extra_sentences)}"[:500]
+                    is_valid = False
+                summary += '.'
             
             if detect_repetition(summary):
                 log_warning(f"Repetitive summary detected: {summary[:50]}... Using fallback")
                 sentences = english_text.split('. ')
                 relevant_sentences = [s for s in sentences if len(s.split()) > 3 and not any(x in s.lower() for x in ['advertisement', 'sponsored', 'read more'])]
-                summary = ' '.join(relevant_sentences[:5])[:600]
+                summary = ' '.join(relevant_sentences[:3])[:500]
                 summary_words = summary.split()
-                if len(summary_words) > 150:
-                    summary = ' '.join(summary_words[:150])
-                elif len(summary_words) < 80:
-                    extra_sentences = relevant_sentences[5:10]
+                if len(summary_words) > 80:
+                    summary = ' '.join(summary_words[:80])
+                elif len(summary_words) < 60:
+                    extra_sentences = relevant_sentences[3:5]
                     if extra_sentences:
-                        summary = f"{summary} {' '.join(extra_sentences)}"[:600]
-                        summary_words = summary.split()
-                        if len(summary_words) < 80:
-                            more_sentences = relevant_sentences[10:15]
-                            if more_sentences:
-                                summary = f"{summary} {' '.join(more_sentences)}"[:600]
-                if not summary.endswith('.'):
-                    summary += '.'
+                        summary = f"{summary} {' '.join(extra_sentences)}"[:500]
+                summary += '.'
+                is_valid = False
         
         log_info(f"Generated summary (Words: {len(summary.split())})")
-        return clean_text(summary)
-        
-    except Exception as e:
-        log_warning(f"Summarization Error: {e}, using fallback")
-        sentences = text.split('. ')
-        relevant_sentences = [s for s in sentences if len(s.split()) > 3 and not any(x in s.lower() for x in ['advertisement', 'sponsored', 'read more'])]
-        fallback_summary = ' '.join(relevant_sentences[:5])[:600]
-        summary_words = fallback_summary.split()
-        word_count = len(summary_words)
-        if not is_title:
-            if word_count > 150:
-                fallback_summary = ' '.join(summary_words[:150])
-            elif word_count < 80:
-                extra_sentences = relevant_sentences[5:10]
-                if extra_sentences:
-                    fallback_summary = f"{fallback_summary} {' '.join(extra_sentences)}"[:600]
-                    summary_words = fallback_summary.split()
-                    if len(summary_words) < 80:
-                        more_sentences = relevant_sentences[10:15]
-                        if more_sentences:
-                            fallback_summary = f"{fallback_summary} {' '.join(more_sentences)}"[:600]
-                else:
-                    fallback_summary = ' '.join(text.split()[:150])
-                if not fallback_summary.endswith('.'):
-                    fallback_summary += '.'
-            log_info(f"Fallback summary (Words: {len(fallback_summary.split())})")
-        else:
-            if relevant_sentences:
-                fallback_summary = clean_text(' '.join(relevant_sentences[0].split()[:25]))
-            else:
-                fallback_summary = clean_text(' '.join(text.split()[:25]))
-        return clean_text(fallback_summary[:100] if is_title else fallback_summary)
+        return clean_text(summary), is_valid
 
 def extract_location(content):
     locations = {
@@ -475,30 +492,6 @@ def extract_location(content):
             if keyword in content_lower:
                 return loc
     return 'Unknown'
-
-def detect_category(title, content):
-    categories = {
-        'defence': ['defence', 'military', 'fighter', 'jet', 'aircraft', 'tejas', 'hal', 'aerospace', 'safran', 'missile', 'army', 'navy', 'air force'],
-        'international': ['international', 'global', 'foreign', 'diplomacy', 'visa', 'immigration', 'united nations', 'summit', 'trade agreement'],
-        'politics': ['election', 'government', 'minister', 'pm', 'cm', 'parliament', 'congress', 'bjp', 'political', 'policy', 'law', 'bill', 'act', 'prime minister', 'president'],
-        'sports': ['cricket', 'football', 'match', 'sport', 'player', 'tournament', 'olympics', 'medal', 'coach', 'team', 'ipl', 'world cup', 'championship'],
-        'business': ['market', 'stock', 'business', 'economy', 'company', 'industry', 'trade', 'commerce', 'gst', 'tax', 'investment', 'finance', 'bank', 'rupee', 'dollar'],
-        'entertainment': ['movie', 'film', 'actor', 'bollywood', 'hollywood', 'celebrity', 'music', 'song', 'album', 'director', 'entertainment', 'actor', 'actress'],
-        'crime': ['crime', 'arrest', 'police', 'murder', 'theft', 'robbery', 'accident', 'investigation', 'court', 'judge', 'lawyer', 'case', 'illegal', 'violation', 'homicide', 'fraud'],
-        'technology': ['technology', 'tech', 'computer', 'mobile', 'app', 'software', 'internet', 'digital', 'ai', 'artificial intelligence', 'smartphone', 'social media', 'iphone', 'foxconn', 'apple'],
-        'health': ['health', 'medical', 'hospital', 'doctor', 'disease', 'medicine', 'vaccine', 'covid', 'corona', 'healthcare', 'treatment', 'patient'],
-        'education': ['education', 'school', 'college', 'university', 'student', 'teacher', 'exam', 'result', 'education', 'board', 'degree']
-    }
-    text = (title + ' ' + content).lower()
-    category_scores = {cat: 0 for cat in categories}
-    for cat, keywords in categories.items():
-        for keyword in keywords:
-            if keyword in text:
-                category_scores[cat] += 1
-    max_score = max(category_scores.values())
-    if max_score == 0:
-        return 'general'
-    return max(category_scores, key=category_scores.get)
 
 def fetch_page(url, retries=3):
     backoff = 5
@@ -566,7 +559,7 @@ def scrape_and_save():
             continue
         soup = BeautifulSoup(html, 'html.parser')
         
-        article_links = list(set(link.get('href', '') for link in soup.select(site['article_link_selector'])[:15]))  # Remove duplicates
+        article_links = list(set(link.get('href', '') for link in soup.select(site['article_link_selector'])[:15]))
         articles_with_dates = []
         for article_url in article_links:
             if not article_url:
@@ -595,7 +588,7 @@ def scrape_and_save():
         except Exception as e:
             log_warning(f"Sorting error: {e}. Using unsorted order.")
         
-        selected_articles = [article['url'] for article in articles_with_dates[:5]]
+        selected_articles = [article['url'] for article in articles_with_dates[:2]]  # Max 2 articles
         log_info(f"Selected {len(selected_articles)} latest articles from {site['name']}: {selected_articles}")
         
         if not selected_articles:
@@ -641,7 +634,7 @@ def scrape_and_save():
                                     'latest news', 'trending now', 'recommended', 'related news',
                                     'copyright', 'privacy policy', 'terms of use', 'cookie policy'
                                 ]) and
-                                not re.search(r'â‚¹\d+,\d+', elem_text) and
+                                not re.search(r'₹\d+,\d+', elem_text) and
                                 not re.search(r'^\d+\s*\.?\s*$', elem_text)):
                                 filtered_content.append(elem_text)
                         if filtered_content:
@@ -672,39 +665,41 @@ def scrape_and_save():
                 lang = detect_language(title + ' ' + content, site['name'])
                 log_info(f"Detected language: {lang}")
 
-                summarized_title = summarize_text(title, is_title=True, source_lang=lang)
-                if (count_words(summarized_title) < 15 or count_words(summarized_title) > 30 or
-                    any(x in summarized_title.lower() for x in ['summarize', '15-30']) or
-                    not check_title_similarity(summarized_title, content)):
-                    log_warning(f"Invalid title summary: {summarized_title[:50]}... Using fallback (Words: {count_words(summarized_title)}, Similarity: {check_title_similarity(summarized_title, content)})")
+                summarized_title, is_title_valid = summarize_text(title, is_title=True, source_lang=lang)
+                if not is_title_valid:
+                    log_warning(f"Invalid title summary: {summarized_title[:50]}... (Words: {count_words(summarized_title)}, Similarity: {check_title_similarity(summarized_title, content)})")
                     sentences = content.split('. ')
                     relevant_sentences = [s for s in sentences if len(s.split()) > 3 and not any(x in s.lower() for x in ['advertisement', 'sponsored', 'read more'])]
-                    summarized_title = clean_text(' '.join(relevant_sentences[0].split()[:25]) if relevant_sentences else ' '.join(title.split()[:25]))
+                    summarized_title = clean_text(' '.join(relevant_sentences[0].split()[:15]) if relevant_sentences else ' '.join(title.split()[:15]))
+                    if count_words(summarized_title) < 10:
+                        extra_words = relevant_sentences[1].split()[:15-count_words(summarized_title)] if len(relevant_sentences) > 1 else title.split()[:15-count_words(summarized_title)]
+                        summarized_title = clean_text(summarized_title + ' ' + ' '.join(extra_words))
+                    is_title_valid = count_words(summarized_title) >= 10 and count_words(summarized_title) <= 15
                 log_info(f"Summarized title: {summarized_title[:100]} (Words: {count_words(summarized_title)})")
 
-                summary = summarize_text(content, is_title=False, source_lang=lang)
-                if count_words(summary) < 80 or count_words(summary) > 150 or detect_repetition(summary) or not summary.endswith('.'):
+                summary, is_summary_valid = summarize_text(content, is_title=False, source_lang=lang)
+                if not is_summary_valid:
                     log_warning(f"Summary issue: {summary[:50]}... (Words: {count_words(summary)}, Repetitive: {detect_repetition(summary)}, Ends with period: {summary.endswith('.')})")
                     sentences = content.split('. ')
                     relevant_sentences = [s for s in sentences if len(s.split()) > 3 and not any(x in s.lower() for x in ['advertisement', 'sponsored', 'read more'])]
-                    summary = ' '.join(relevant_sentences[:5])[:600]
+                    summary = ' '.join(relevant_sentences[:3])[:500]
                     summary_words = summary.split()
-                    if len(summary_words) > 150:
-                        summary = ' '.join(summary_words[:150])
-                    elif len(summary_words) < 80:
-                        extra_sentences = relevant_sentences[5:10]
+                    if len(summary_words) > 80:
+                        summary = ' '.join(summary_words[:80])
+                    elif len(summary_words) < 60:
+                        extra_sentences = relevant_sentences[3:5]
                         if extra_sentences:
-                            summary = f"{summary} {' '.join(extra_sentences)}"[:600]
-                            summary_words = summary.split()
-                            if len(summary_words) < 80:
-                                more_sentences = relevant_sentences[10:15]
-                                if more_sentences:
-                                    summary = f"{summary} {' '.join(more_sentences)}"[:600]
-                        if not summary.endswith('.'):
-                            summary += '.'
+                            summary = f"{summary} {' '.join(extra_sentences)}"[:500]
+                    summary += '.'
+                    is_summary_valid = count_words(summary) >= 60 and count_words(summary) <= 80 and not detect_repetition(summary)
                     log_info(f"Corrected summary (Words: {len(summary.split())})")
                 
                 log_info(f"Summary: {summary[:100]} (Words: {count_words(summary)})")
+
+                if not is_title_valid or not is_summary_valid:
+                    log_error(f"Skipping article due to invalid title or summary: {article_url}")
+                    report['failures'].append(f"{site['name']}: Invalid title/summary for {article_url}")
+                    continue
 
                 if is_content_duplicate(summary):
                     log_info(f"Skipping duplicate article: {article_url} (Summary: {summary[:50]}...)")
@@ -713,13 +708,27 @@ def scrape_and_save():
 
                 title_translations = {}
                 summary_translations = {}
-                target_languages = ['hi', 'mr', 'ta', 'te']
+                target_languages = ['hi', 'en', 'mr']  # Reduced languages
+                all_translations_valid = True
                 for target_lang in target_languages:
-                    title_translations[target_lang] = summarized_title if lang == target_lang else translate_text(summarized_title, target_lang, lang)
-                    summary_translations[target_lang] = summary if lang == target_lang else translate_text(summary, target_lang, lang)
+                    translated_title = summarized_title if lang == target_lang else translate_text(summarized_title, target_lang, lang)
+                    translated_summary = summary if lang == target_lang else translate_text(summary, target_lang, lang)
+                    title_translations[target_lang] = translated_title
+                    summary_translations[target_lang] = translated_summary
+                    if not is_valid_translation(translated_title, target_lang) or not is_valid_translation(translated_summary, target_lang):
+                        all_translations_valid = False
+                        log_warning(f"Invalid translation for {target_lang}: Title: {translated_title[:50]}..., Summary: {translated_summary[:50]}...")
+                
+                if not all_translations_valid:
+                    log_error(f"Skipping article due to invalid translations: {article_url}")
+                    report['failures'].append(f"{site['name']}: Invalid translations for {article_url}")
+                    continue
 
-                log_info(f"ðŸ“ Title translations: {title_translations}")
-                log_info(f"ðŸ“ Summary translations: {summary_translations}")
+                log_info(f"📝 Title translations: {title_translations}")
+                log_info(f"📝 Summary translations: {summary_translations}")
+
+                state, district = extract_state_district(content)
+                category = detect_category(title, content)
 
                 try:
                     article_data = {
@@ -732,8 +741,10 @@ def scrape_and_save():
                         "translations": summary_translations,
                         "image": image,
                         "location": extract_location(content),
-                        "category": detect_category(title, content),
-                        "categories": [detect_category(title, content), "all", "trending"],
+                        "state": state,
+                        "district": district,
+                        "category": category,
+                        "categories": [category, "all", "trending"],
                         "source": site['name'],
                         "publish_date": publish_date,
                         "timestamp": firestore.SERVER_TIMESTAMP,
@@ -761,7 +772,7 @@ def scrape_and_save():
                             'summary': summary
                         }
                     report['successes'].append(f"{site['name']}: {summarized_title[:50]}... (Date: {publish_date})")
-                    log_info(f"âœ… âœ… Saved: {summarized_title[:50]}... from {site['name']} (Date: {publish_date})")
+                    log_info(f"✅ ✅ Saved: {summarized_title[:50]}... from {site['name']} (Date: {publish_date})")
                 except Exception as e:
                     log_error(f"Firebase Save Error: {e}")
                     report['failures'].append(f"{site['name']}: Firebase save failed for {article_url}")
